@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>نمایش بهتر تراکنش های بام</title>
+    <link rel="stylesheet" href="assets/css/app.css" />
+  </head>
+  <body>
+    <div class="min-h-screen flex flex-col">
+      <header class="bg-primary text-primary-content p-4">
+        <h1 class="text-2xl font-bold text-center">
+          نمایش بهتر تراکنش های بام (بانک ملی ایران)
+        </h1>
+      </header>
+      <main class="p-4 leading-loose" dir="rtl">
+        <!-- select files -->
+        <section class="mb-6" id="load_files">
+          <div class="alert alert-warning max-w-2xl mx-auto mb-4 text-justify">
+            <strong>سلب مسئولیت:</strong> این پروژه به صورت غیررسمی توسعه یافته
+            و هیچ ارتباطی با بانک ملی ایران ندارد. استفاده از این ابزار به عهده
+            خود شما است و توسعه دهنده هیچ مسئولیتی در قبال استفاده نادرست یا
+            مشکلات ایجاد شده ندارد.
+          </div>
+          <p class="text-center">
+            جهت انجام کار شما باید ابتدا فایل تراکنش های بام و فایل دسته بندی
+            تراکنش های خود را انتخاب کنید.
+          </p>
+          <div class="flex justify-center items-center mt-4">
+            <div>
+              <button
+                class="btn btn-info"
+                onclick="get_information_from_baam.showModal()"
+              >
+                آموزش دریافت فایل تراکنش های بام
+              </button>
+              <dialog id="get_information_from_baam" class="modal">
+                <div class="modal-box leading-loose max-w-2xl" dir="rtl">
+                  <h3 class="text-lg font-bold">
+                    آموزش دریافت فایل تراکنش های بام
+                  </h3>
+                  <ol class="list-decimal list-inside">
+                    <li>
+                      ابتدا باید اقدام به فعال سازی بام برای حساب بانکی خود در
+                      بانکی ملی کنید.
+                    </li>
+                    <li>
+                      سپس در مرورگر خود با حساب کاربری خود وارد بام خود شوید.
+                    </li>
+                  </ol>
+                  <div class="alert alert-info mt-2">
+                    دریافت فایل دسته بندی ها:
+                  </div>
+                  <ul class="list-disc list-inside">
+                    <li>
+                      در همان مرورگر پس از ورود به بام، به آدرس زیر بروید:
+                      <br />
+                      <a
+                        href="https://baam.bmi.ir/api/v1/pfm/transaction-category"
+                        target="_blank"
+                        class="text-blue-600 underline"
+                        >https://baam.bmi.ir/api/v1/pfm/transaction-category</a
+                      >
+                    </li>
+                    <li>
+                      و محتویات آن را به صورت یک فایل json به نام زیر ذخیره
+                      کنید:
+
+                      <div
+                        class="mt-2 p-2 bg-base-300 text-base-content rounded font-mono"
+                        dir="ltr"
+                      >
+                        transaction-category.json
+                      </div>
+                    </li>
+                  </ul>
+                  <div class="alert alert-warning mt-5">
+                    دریافت فایل تراکنش ها:
+                  </div>
+                  <div>
+                    شماره حساب بانکی خود را وارد کنید:
+                    <input
+                      type="text"
+                      id="bank_account_input"
+                      placeholder="مثال: 037000000001"
+                      class="input input-bordered w-full max-w-xs mt-2"
+                    />
+                  </div>
+                  <ul class="list-disc list-inside">
+                    <li>
+                      در همان مرورگر پس از ورود به بام، به آدرس زیر بروید:
+                      <br />
+                      <div
+                        class="mt-2 p-2 bg-base-300 text-base-content rounded font-mono break-all text-left"
+                        dir="ltr"
+                      >
+                        <a href="#" id="get_transactions_url">
+                          https://baam.bmi.ir/api/account-statement/v1/transactions?accountNumber=<span
+                            class="text-warning"
+                            id="bank_account_data"
+                            >BANK_ACCOUNT</span
+                          >&sort=false&pageNumber=1&pageSize=9999999&date_gt=<span
+                            class="text-info last_month_date_url"
+                            >2025-10-01</span
+                          >T20%3A30%3A00.000Z&sortType=DESC</a
+                        >
+                      </div>
+                    </li>
+                    <li>
+                      و محتویات آن را به صورت یک فایل json به نام زیر ذخیره
+                      <div
+                        class="mt-2 p-2 bg-base-300 text-base-content rounded font-mono"
+                        dir="ltr"
+                      >
+                        transactions.json
+                      </div>
+                    </li>
+                  </ul>
+                  <div class="modal-action">
+                    <form method="dialog">
+                      <button class="btn btn-error">بستن</button>
+                    </form>
+                  </div>
+                </div>
+              </dialog>
+            </div>
+          </div>
+          <div class="flex flex-col items-center mt-4 gap-4">
+            <div id="categoriesFileSelect">
+              <label
+                for="categoriesFile"
+                class="btn btn-secondary btn-outline cursor-pointer"
+                >انتخاب فایل دسته بندی تراکنش ها</label
+              >
+              <input
+                type="file"
+                id="categoriesFile"
+                accept=".json"
+                class="hidden"
+              />
+            </div>
+            <div id="baamFileSelect" class="hidden flex-col items-center">
+              <div class="alert alert-warning mb-2 text-center">
+                اکنون فایل تراکنش های بام را انتخاب کنید
+              </div>
+              <div>
+                <label
+                  for="baamFile"
+                  class="btn btn-error cursor-pointer animate-pulse"
+                  >انتخاب فایل تراکنش های بام</label
+                >
+                <input
+                  type="file"
+                  id="baamFile"
+                  accept=".json"
+                  class="hidden"
+                />
+              </div>
+            </div>
+          </div>
+          <div class="alert alert-info max-w-2xl mx-auto mt-6 text-justify">
+            فایل های انتخاب شده در جایی ذخیره نمی شوند و فقط در حافظه مرورگر شما
+            نگهداری و پردازش می شوند.
+          </div>
+        </section>
+        <div id="categories_result" class="">
+          <div class="mb-6">
+            <h2 class="text-xl font-bold mb-4 text-center">دسته بندی ها</h2>
+            <div
+              id="categories_data_container"
+              class="flex flex-wrap gap-2 justify-center"
+            ></div>
+          </div>
+        </div>
+      </main>
+      <footer class="bg-base-300 text-center p-4 mt-auto">
+        <p>
+          2025 &copy; Developed by
+          <a
+            href="https://masterking32.com"
+            target="_blank"
+            class="text-primary"
+            >MasterkinG32</a
+          >
+          / Project Repository:
+          <a
+            href="https://github.com/masterking32/BMI_BAAM_transaction_viewer"
+            target="_blank"
+            class="text-secondary"
+            >GitHub Repository</a
+          >
+        </p>
+      </footer>
+      <script src="assets/js/app.js"></script>
+    </div>
+  </body>
+</html>
