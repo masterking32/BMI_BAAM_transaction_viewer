@@ -1,51 +1,54 @@
 // BAAM Viewer Main Script
-(function () {
-  // --- Utility Functions ---
+"use strict";
 
-  // Get last month's date in YYYY-MM-DD format
+/**
+ * BAAM Viewer Main Script (Refactored)
+ * Modular, maintainable, and professional JavaScript
+ */
+(function () {
+  // --- Chart Defaults ---
+  if (window.Chart) {
+    Chart.defaults.font.family = "Vazir, sans-serif";
+    Chart.defaults.font.size = 14;
+  }
+
+  /**
+   * Get last month's date in YYYY-MM-DD format
+   * @returns {string}
+   */
   const getLastMonthDate = () => {
     const today = new Date();
-    const lastMonth = new Date(
-      today.getFullYear(),
-      today.getMonth() - 1,
-      today.getDate()
-    );
-    const year = lastMonth.getFullYear();
-    const month = String(lastMonth.getMonth() + 1).padStart(2, "0");
-    const day = String(lastMonth.getDate()).padStart(2, "0");
-    return `${year}-${month}-${day}`;
+    const lastMonth = new Date(today);
+    lastMonth.setMonth(today.getMonth() - 1);
+    return lastMonth.toISOString().slice(0, 10);
   };
 
-  // Show alert message (auto-dismiss)
-  const showAlert = (message) => {
+  /**
+   * Show alert message (auto-dismiss)
+   * @param {string} message
+   * @param {number} [timeout=5000]
+   */
+  const showAlert = (message, timeout = 5000) => {
     let alertContainer = document.getElementById("alert_container");
     if (!alertContainer) {
       alertContainer = document.createElement("div");
       alertContainer.id = "alert_container";
       alertContainer.setAttribute("role", "alert");
       alertContainer.setAttribute("aria-live", "assertive");
-      alertContainer.classList.add(
-        "alert",
-        "alert-error",
-        "fixed",
-        "top-4",
-        "left-1",
-        "z-50"
-      );
+      alertContainer.className = "alert alert-error fixed top-4 left-1 z-50";
       alertContainer.setAttribute("dir", "rtl");
       document.body.appendChild(alertContainer);
     }
     alertContainer.textContent = message;
-    setTimeout(() => {
-      if (alertContainer) {
-        alertContainer.remove();
-      }
-    }, 5000);
+    setTimeout(() => alertContainer?.remove(), timeout);
   };
 
-  // Detect if a hex color is light
-  const isColorLight = (color) => {
-    if (!color) color = "#777777";
+  /**
+   * Detect if a hex color is light
+   * @param {string} color
+   * @returns {boolean}
+   */
+  const isColorLight = (color = "#777777") => {
     let r, g, b;
     if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(color)) {
       if (color.length === 4) {
@@ -64,33 +67,28 @@
   };
 
   // --- Initialization ---
-
   // Set last month date in all relevant elements
-  const lastMonthDate = getLastMonthDate();
   document.querySelectorAll(".last_month_date_url").forEach((el) => {
-    el.textContent = lastMonthDate;
+    el.textContent = getLastMonthDate();
   });
 
   // --- Bank Account Input Handling ---
   const bankAccountInput = document.getElementById("bank_account_input");
   const bankAccountData = document.getElementById("bank_account_data");
-  const getTransactionsUrl = document.getElementById("get_transactions_url");
   const accountNumberRegex = /^0\d{12}$/;
 
-  if (bankAccountInput && bankAccountData && getTransactionsUrl) {
-    bankAccountInput.addEventListener("input", (event) => {
-      const accountNumber = event.target.value.trim();
+  if (bankAccountInput && bankAccountData) {
+    bankAccountInput.addEventListener("input", ({ target }) => {
+      const accountNumber = target.value.trim();
       bankAccountData.textContent = accountNumber || "BANK_ACCOUNT";
-      if (!accountNumberRegex.test(accountNumber)) {
-        bankAccountInput.classList.add("text-red-500", "border-red-500");
-        getTransactionsUrl.removeAttribute("href");
-        getTransactionsUrl.removeAttribute("target");
-      } else {
-        bankAccountInput.classList.remove("text-red-500", "border-red-500");
-        const url = `https://baam.bmi.ir/api/account-statement/v1/transactions?accountNumber=${accountNumber}&sort=false&pageNumber=1&pageSize=9999999&date_gt=${lastMonthDate}T20%3A30%3A00.000Z&sortType=DESC`;
-        getTransactionsUrl.href = url;
-        getTransactionsUrl.setAttribute("target", "_blank");
-      }
+      target.classList.toggle(
+        "text-red-500",
+        !accountNumberRegex.test(accountNumber)
+      );
+      target.classList.toggle(
+        "border-red-500",
+        !accountNumberRegex.test(accountNumber)
+      );
     });
   }
 
@@ -98,15 +96,14 @@
   const allCategories = [];
   const categoriesFileInput = document.getElementById("categoriesFile");
   if (categoriesFileInput) {
-    categoriesFileInput.addEventListener("change", (event) => {
-      const files = Array.from(event.target.files);
+    categoriesFileInput.addEventListener("change", ({ target }) => {
+      const files = Array.from(target.files);
       if (!files.length) return;
       files.forEach((file) => {
         const reader = new FileReader();
         reader.onload = (e) => {
           try {
-            const content = e.target.result;
-            const categoriesData = JSON.parse(content);
+            const categoriesData = JSON.parse(e.target.result);
             processCategoriesData(categoriesData);
           } catch (error) {
             showAlert(`خطا در خواندن فایل بام: ${error.message}`);
@@ -118,7 +115,277 @@
     });
   }
 
+  // -- baamFile Upload Handling ---
+  const allTransactions = {
+    startDate: null,
+    endDate: null,
+    income: 0,
+    expense: 0,
+    overallAmount: 0,
+    totalCount: 0,
+    incomeCount: 0,
+    expenseCount: 0,
+    transactions: [],
+    daily_summaries: {},
+  };
+
+  const baamFileInput = document.getElementById("baamFile");
+  if (baamFileInput) {
+    baamFileInput.addEventListener("change", ({ target }) => {
+      const files = Array.from(target.files);
+      if (!files.length) return;
+      files.forEach((file) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          try {
+            const baamData = JSON.parse(e.target.result);
+            processBaamData(baamData);
+          } catch (error) {
+            showAlert(`خطا در خواندن فایل بام: ${error.message}`);
+          }
+        };
+        reader.onerror = () => showAlert("خواندن فایل با خطا مواجه شد.");
+        reader.readAsText(file, "UTF-8");
+      });
+    });
+  }
+
+  // --- Process and Render Transactions ---
+  function processBaamData(baamData) {
+    if (
+      !Array.isArray(baamData) ||
+      !baamData.length ||
+      !baamData[0].hasOwnProperty("transactionId")
+    ) {
+      showAlert("فایل نامعتبر بام انتخاب شده است.");
+      return;
+    }
+
+    // sort all by transactionDateTime
+    baamData.sort((a, b) => {
+      return new Date(a.transactionDateTime) - new Date(b.transactionDateTime);
+    });
+
+    const transactions_result = document.getElementById("transactions_result");
+    if (transactions_result) {
+      transactions_result.classList.remove("hidden");
+    }
+
+    allTransactions.startDate = new JDate(
+      new Date(baamData[0].transactionDateTime)
+    ).format("dddd DD MMMM YYYY");
+    allTransactions.endDate = new JDate(
+      new Date(baamData[baamData.length - 1].transactionDateTime)
+    ).format("dddd DD MMMM YYYY");
+    allTransactions.totalCount = baamData.length;
+
+    baamData.forEach((tx) => {
+      let txDate = new JDate(new Date(tx.transactionDateTime)).format(
+        "YYYY-MM-DD"
+      );
+
+      if (!allTransactions.daily_summaries[txDate]) {
+        allTransactions.daily_summaries[txDate] = {
+          income: 0,
+          expense: 0,
+          balance: 0,
+        };
+      }
+      if (tx.creditDebit === "CREDIT") {
+        allTransactions.income += tx.amount;
+        allTransactions.incomeCount += 1;
+        allTransactions.daily_summaries[txDate].income += tx.amount;
+      } else if (tx.creditDebit === "DEBIT") {
+        allTransactions.expense += tx.amount;
+        allTransactions.expenseCount += 1;
+        allTransactions.daily_summaries[txDate].expense += tx.amount;
+      }
+
+      allTransactions.daily_summaries[txDate].balance = tx.balance;
+      allTransactions.overallAmount += tx.amount;
+      allTransactions.transactions.push(tx);
+    });
+
+    setDataTextContent("start_date_display", allTransactions.startDate);
+    setDataTextContent("end_date_display", allTransactions.endDate);
+
+    const chart_amounts = document.getElementById("chart_amounts");
+    if (chart_amounts) {
+      let ctx = chart_amounts.getContext("2d");
+      if (!ctx) {
+        showAlert("خطا: امکان دریافت context از canvas وجود ندارد.");
+        return;
+      }
+      const amounts_chart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["دریافتی", "پرداختی", "مجموع"],
+          datasets: [
+            {
+              label: "مبالغ (ریال)",
+              data: [
+                allTransactions.income,
+                allTransactions.expense,
+                allTransactions.overallAmount,
+              ],
+              backgroundColor: [
+                "rgba(75, 192, 192, 0.7)",
+                "rgba(255, 99, 132, 0.7)",
+                "rgba(54, 162, 235, 0.7)",
+              ],
+              borderColor: [
+                "rgba(75, 192, 192, 1)",
+                "rgba(255, 99, 132, 1)",
+                "rgba(54, 162, 235, 1)",
+              ],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "top",
+            },
+            title: {
+              display: true,
+              text: "نمودار مبالغ تراکنش‌ها",
+            },
+          },
+        },
+      });
+    }
+
+    const chart_counts = document.getElementById("chart_counts");
+    if (chart_counts) {
+      let ctx = chart_counts.getContext("2d");
+      const counts_chart = new Chart(ctx, {
+        type: "doughnut",
+        data: {
+          labels: ["تعداد دریافتی", "تعداد پرداختی", "کل تراکنش‌ها"],
+          datasets: [
+            {
+              label: "تعداد تراکنش‌ها",
+              data: [
+                allTransactions.incomeCount,
+                allTransactions.expenseCount,
+                allTransactions.totalCount,
+              ],
+              backgroundColor: [
+                "rgba(75, 192, 192, 0.7)",
+                "rgba(255, 99, 132, 0.7)",
+                "rgba(54, 162, 235, 0.7)",
+              ],
+              borderColor: [
+                "rgba(75, 192, 192, 1)",
+                "rgba(255, 99, 132, 1)",
+                "rgba(54, 162, 235, 1)",
+              ],
+              borderWidth: 1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: {
+              position: "top",
+            },
+            title: {
+              display: true,
+              text: "نمودار تعداد تراکنش‌ها",
+            },
+          },
+        },
+      });
+    }
+
+    const chart_daily_amounts = document.getElementById("chart_daily_amounts");
+    if (chart_daily_amounts) {
+      let ctx = chart_daily_amounts.getContext("2d");
+      const dailyLabels = Object.keys(allTransactions.daily_summaries).sort();
+      const dailyIncomeData = dailyLabels.map((date) =>
+        Math.round(allTransactions.daily_summaries[date].income / 10)
+      );
+      const dailyExpenseData = dailyLabels.map((date) =>
+        Math.round(allTransactions.daily_summaries[date].expense / 10)
+      );
+      const dailyBalanceData = dailyLabels.map((date) =>
+        Math.round(allTransactions.daily_summaries[date].balance / 10)
+      );
+
+      const dailyAmountsChart = new Chart(ctx, {
+        type: "line",
+        data: {
+          labels: dailyLabels,
+          datasets: [
+            {
+              label: "دریافتی روزانه (تومان)",
+              data: dailyIncomeData,
+              borderColor: "rgba(75, 192, 192, 1)",
+              backgroundColor: "rgba(75, 192, 192, 0.2)",
+              fill: true,
+              tension: 0.1,
+            },
+            {
+              label: "پرداختی روزانه (تومان)",
+              data: dailyExpenseData,
+              borderColor: "rgba(255, 99, 132, 1)",
+              backgroundColor: "rgba(255, 99, 132, 0.2)",
+              fill: true,
+              tension: 0.1,
+            },
+            {
+              label: "مانده روزانه (تومان)",
+              data: dailyBalanceData,
+              borderColor: "rgba(54, 162, 235, 1)",
+              backgroundColor: "rgba(54, 162, 235, 0.2)",
+              fill: true,
+              tension: 0.1,
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          interaction: {
+            mode: "index",
+            intersect: false,
+          },
+          plugins: {
+            legend: {
+              position: "top",
+            },
+            title: {
+              display: true,
+              text: "نمودار مبالغ روزانه تراکنش‌ها",
+            },
+          },
+        },
+      });
+    }
+
+    const load_files = document.getElementById("load_files");
+    if (load_files) {
+      load_files.classList.add("hidden");
+    }
+  }
+
+  /**
+   * Set text content for an element by ID
+   * @param {string} id
+   * @param {string} value
+   */
+  function setDataTextContent(id, value) {
+    const element = document.getElementById(id);
+    if (element) element.textContent = value;
+  }
+
   // --- Process and Render Categories ---
+  /**
+   * Process and render categories data
+   * @param {object} categoriesData
+   */
   function processCategoriesData(categoriesData) {
     if (
       !categoriesData?.resultSet?.innerResponse ||
@@ -148,19 +415,15 @@
       const textColorClass = isColorLight(badgeColor)
         ? "text-black"
         : "text-white";
-
       item.textColorClass = textColorClass;
-
       allCategories.push(item);
       const categoryDiv = document.createElement("div");
-      categoryDiv.classList.add("badge", "badge-xs", "m-1", textColorClass);
-      categoryDiv.setAttribute("tabindex", "0");
+      categoryDiv.className = `badge badge-xs m-1 ${textColorClass}`;
+      categoryDiv.tabIndex = 0;
       categoryDiv.setAttribute("aria-label", badgeName);
       categoryDiv.style.backgroundColor = badgeColor;
       categoryDiv.textContent = badgeName;
-      // Tooltip on hover
       categoryDiv.title = `دسته: ${badgeName}`;
-      // Add a data attribute for event delegation
       categoryDiv.setAttribute("data-badge-name", badgeName);
       fragment.appendChild(categoryDiv);
     });

@@ -13,7 +13,7 @@
           نمایش بهتر تراکنش های بام (بانک ملی ایران)
         </h1>
       </header>
-      <main class="p-4 leading-loose" dir="rtl">
+      <main class="p-4 leading-loose max-w-5xl mx-auto" dir="rtl">
         <!-- select files -->
         <section class="mb-6" id="load_files">
           <div class="alert alert-warning max-w-2xl mx-auto mb-4 text-justify">
@@ -77,13 +77,13 @@
                   <div class="alert alert-warning mt-5">
                     دریافت فایل تراکنش ها:
                   </div>
-                  <div>
+                  <div class="mt-5 vertical-middle flex flex-col">
                     شماره حساب بانکی خود را وارد کنید:
                     <input
                       type="text"
                       id="bank_account_input"
                       placeholder="مثال: 037000000001"
-                      class="input input-bordered w-full max-w-xs mt-2"
+                      class="input input-bordered input-xs w-full max-w-xs mt-2 mx-auto text-center"
                     />
                   </div>
                   <ul class="list-disc list-inside">
@@ -94,16 +94,14 @@
                         class="mt-2 p-2 bg-base-300 text-base-content rounded font-mono break-all text-left"
                         dir="ltr"
                       >
-                        <a href="#" id="get_transactions_url">
-                          https://baam.bmi.ir/api/account-statement/v1/transactions?accountNumber=<span
-                            class="text-warning"
-                            id="bank_account_data"
-                            >BANK_ACCOUNT</span
-                          >&sort=false&pageNumber=1&pageSize=9999999&date_gt=<span
-                            class="text-info last_month_date_url"
-                            >2025-10-01</span
-                          >T20%3A30%3A00.000Z&sortType=DESC</a
-                        >
+                        https://baam.bmi.ir/api/account-statement/v1/transactions?accountNumber=<span
+                          class="text-warning"
+                          id="bank_account_data"
+                          >BANK_ACCOUNT</span
+                        >&sort=false&pageNumber=1&pageSize=99999&date_gt=<span
+                          class="text-info last_month_date_url"
+                          >2025-10-01</span
+                        >T20%3A30%3A00.000Z&sortType=DESC
                       </div>
                     </li>
                     <li>
@@ -139,7 +137,7 @@
                 class="hidden"
               />
             </div>
-            <div id="baamFileSelect" class="hidden flex-col items-center">
+            <div id="baamFileSelect" class="flex-col items-center hidden">
               <div class="alert alert-warning mb-2 text-center">
                 اکنون فایل تراکنش های بام را انتخاب کنید
               </div>
@@ -163,7 +161,72 @@
             نگهداری و پردازش می شوند.
           </div>
         </section>
-        <div id="categories_result" class="">
+        <div id="transactions_result" class="hidden">
+          <!-- Charts section -->
+          <div id="charts_container" class="mb-6">
+            <h2 class="text-xl font-bold mb-4 text-center">اطلاعات کلی</h2>
+            <div>
+              <div
+                class="flex justify-center items-center gap-4 mb-4 max-w-md mx-auto"
+              >
+                <div class="card bg-fuchsia-900 text-white shadow-md p-2">
+                  <div class="card-body text-center px-4 py-2">
+                    <h3
+                      class="card-title text-center mx-auto text-sm font-light"
+                    >
+                      تاریخ شروع
+                    </h3>
+                    <p
+                      id="start_date_display"
+                      class="text-sm font-bold text-center mx-auto"
+                    ></p>
+                  </div>
+                </div>
+                <div class="card bg bg-indigo-900 text-white shadow-md p-2">
+                  <div class="card-body text-center px-4 py-2">
+                    <h3
+                      class="card-title text-center text-sm font-light mx-auto"
+                    >
+                      تاریخ پایان
+                    </h3>
+                    <p
+                      id="end_date_display"
+                      class="text-sm font-bold text-center mx-auto"
+                    ></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div
+              id="charts_data_container"
+              class="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-4xl mx-auto"
+            >
+              <div class="card bg-base-200 shadow-md p-4">
+                <canvas id="chart_amounts"></canvas>
+              </div>
+              <div class="card bg-base-200 shadow-md p-4">
+                <canvas id="chart_counts"></canvas>
+              </div>
+            </div>
+            <div id="daily_chart_container" class="mt-6 max-w-4xl mx-auto">
+              <div class="card bg-base-200 shadow-md p-4">
+                <canvas id="chart_daily_amounts"></canvas>
+              </div>
+            </div>
+          </div>
+
+          <!-- Transactions section (Datatable) -->
+          <div id="transactions_container" class="mb-6">
+            <h2 class="text-xl font-bold mb-4 text-center">تراکنش ها</h2>
+            <div class="overflow-x-auto">
+              <table
+                id="transactions_table"
+                class="table table-zebra w-full"
+              ></table>
+            </div>
+          </div>
+        </div>
+        <div id="categories_result" class="hidden">
           <div class="mb-6">
             <h2 class="text-xl font-bold mb-4 text-center">دسته بندی ها</h2>
             <div
@@ -191,6 +254,8 @@
           >
         </p>
       </footer>
+      <script src="assets/js/jdate.min.js"></script>
+      <script src="assets/js/chart.js"></script>
       <script src="assets/js/app.js"></script>
     </div>
   </body>
