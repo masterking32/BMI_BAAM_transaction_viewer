@@ -7,10 +7,12 @@
   const percent = new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 1, style: 'percent' });
   const compact = new Intl.NumberFormat('fa-IR', { notation: 'compact', maximumFractionDigits: 1 });
   const collator = new Intl.Collator('fa', { numeric: true });
-  const state = { rows: [], categories: [], filtered: [], summary: null, allSummary: null,
+  const state = { rows: [], sourceRows: [], categories: [], localCategories: [], categoryEdits: new Map(), filtered: [], summary: null, allSummary: null,
     loaded: false, transactionName: '', categoryName: '', diagnostics: null, categoryDiagnostics: null,
     filters: {}, unit: 'toman', sort: 'timestamp', ascending: false, page: 1, pageSize: 25,
-    charts: {}, printing: false, theme: 'light' };
+    charts: {}, printing: false, theme: 'light', drilldown: null, datasetKey: 0, editingRowId: null };
+  let reports;
+  let categorySequence = 0;
   let importQueue = Promise.resolve();
   let importEpoch = 0;
   const downloadUrls = new Set();
@@ -56,7 +58,7 @@
     $('themeToggle').title = dark ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره';
     $('themeIcon').textContent = dark ? '☾' : '☀';
     $('themeLabel').textContent = dark ? 'تیره' : 'روشن';
-    if (state.loaded) renderCharts();
+    if (state.loaded) { renderCharts(); renderAdvancedReports(); }
   }
   function chartColors() {
     return state.theme === 'dark' && !state.printing
@@ -75,10 +77,50 @@
     if ([...select.options].some(option => option.value === previous)) select.value = previous;
   }
   function populateOptions() {
-    const cats = [...new Map(state.rows.map(row => [row.categoryId, row.category])).entries()];
+    const cats = [...new Map([...state.sourceRows.map(row => [row.categoryId, row.category]),
+      ...state.rows.map(row => [row.categoryId, row.category]), ...allCategories().map(category => [category.id, category.name])]).entries()];
     setOptions('categoryId', cats.sort((a, b) => collator.compare(a[1], b[1])), 'همه دسته‌ها');
     const methods = [...new Set(state.rows.map(row => row.method))].sort(collator.compare);
     setOptions('method', methods.map(name => [name, name]), 'همه روش‌ها');
+  }
+  function allCategories(categories = state.categories, local = state.localCategories) {
+    return [...new Map([...categories, ...local].map(category => [category.id, category])).values()];
+  }
+  function deriveRows(source = state.sourceRows, categories = allCategories(), edits = state.categoryEdits) {
+    const byId = new Map(categories.map(category => [category.id, category]));
+    return D.applyCategories(source.map(row => {
+      const categoryId = edits.get(row.id);
+      if (categoryId === undefined) return row;
+      return { ...row, categoryId, raw: { ...row.raw,
+        categoryId: categoryId === D.UNKNOWN_CATEGORY ? null : categoryId,
+        categoryName: byId.get(categoryId)?.name || null } };
+    }), categories);
+  }
+  function filteredRows(filters = state.filters) {
+    const rows = D.filterTransactions(state.rows, filters);
+    return state.drilldown ? rows.filter(row => state.drilldown.rowIds.has(row.id)) : rows;
+  }
+  function refreshReport() {
+    state.filtered = filteredRows();
+    state.summary = D.summarize(state.filtered);
+    state.page = 1;
+    render();
+  }
+  function refreshCategories() {
+    state.rows = deriveRows();
+    state.allSummary = D.summarize(state.rows);
+    populateOptions();
+    state.filters.categoryId = $('categoryId').value;
+    refreshReport();
+  }
+  function renderAdvancedReports() {
+    if (!state.loaded || !reports) return;
+    reports.render({ rows: state.filtered,
+      baselineRows: filteredRows({ ...state.filters, startDate: '', endDate: '' }),
+      allRows: state.rows, categories: allCategories(), filters: state.filters,
+      unitLabel: unit(), theme: state.theme, diagnostics: state.diagnostics,
+      editedCount: state.categoryEdits.size, datasetKey: state.datasetKey,
+      drilldownLabel: state.drilldown?.label || '', printing: state.printing });
   }
   function filterAmount(value) {
     if (!value.trim()) return null;
@@ -101,7 +143,7 @@
     if (!state.loaded) return;
     try {
       const filters = readFilters();
-      const filtered = D.filterTransactions(state.rows, filters);
+      const filtered = filteredRows(filters);
       const summary = D.summarize(filtered);
       state.filters = filters; state.filtered = filtered; state.summary = summary; state.page = 1;
       $('filterError').hidden = true;
@@ -116,7 +158,7 @@
   function resetFilters(renderAfter = true) {
     clearTimeout(searchTimer);
     $('filterForm').reset();
-    state.filters = {}; state.page = 1;
+    state.filters = {}; state.page = 1; state.drilldown = null;
     $('filterError').hidden = true;
     if (renderAfter) applyFilters();
   }
@@ -124,6 +166,12 @@
     let parsed;
     try { parsed = JSON.parse(text.replace(/^\uFEFF/, '')); }
     catch { throw new Error('ساختار JSON فایل معتبر نیست.'); }
+    if (parsed?.format === 'baam-report-v1') {
+      if (parsed.version !== 1 || !Array.isArray(parsed.transactions) || !Array.isArray(parsed.categories)) {
+        throw new Error('ساختار فایل اصلاح‌شده بام‌نما معتبر نیست.');
+      }
+      return { kind: 'bundle', parsed, name };
+    }
     const candidates = [parsed, parsed?.resultSet?.innerResponse, parsed?.resultSet, parsed?.data, parsed?.result];
     let items = [];
     for (const candidate of candidates) {
@@ -155,8 +203,10 @@
       if (new Set(loaded.map(file => file.kind)).size !== loaded.length) {
         throw new Error('در هر نوبت فقط یک فایل از هر نوع را انتخاب کنید.');
       }
-      const categoryFile = loaded.find(file => file.kind === 'categories');
-      const transactionFile = loaded.find(file => file.kind === 'transactions');
+      const bundle = loaded.find(file => file.kind === 'bundle');
+      if (bundle && loaded.length !== 1) throw new Error('فایل اصلاح‌شده شامل هر دو نوع اطلاعات است؛ آن را به‌تنهایی انتخاب کنید.');
+      const categoryFile = bundle ? { name: bundle.name, parsed: bundle.parsed.categories } : loaded.find(file => file.kind === 'categories');
+      const transactionFile = bundle ? { name: bundle.name, parsed: bundle.parsed.transactions } : loaded.find(file => file.kind === 'transactions');
       const categories = categoryFile ? D.parseCategories(categoryFile.parsed) : null;
       if (categories && categories.diagnostics.inputCount && !categories.categories.length) {
         throw new Error('هیچ دسته‌بندی معتبری در فایل پیدا نشد.');
@@ -166,13 +216,22 @@
       if (transactions && transactions.diagnostics.inputCount && !transactions.rows.length) {
         throw new Error('هیچ تراکنش معتبری در فایل پیدا نشد. ساختار، مبلغ، تاریخ و نوع تراکنش را بررسی کنید.');
       }
-      const nextRows = transactions?.rows || D.applyCategories(state.rows, nextCategories);
+      const nextSource = transactions?.rows || state.sourceRows;
+      const nextLocal = transactions ? [] : state.localCategories;
+      const nextEdits = transactions ? new Map() : state.categoryEdits;
+      const nextRows = deriveRows(nextSource, allCategories(nextCategories, nextLocal), nextEdits);
       // Calculate before committing state, so malformed/unsafe replacements cannot destroy a valid report.
       const nextAllSummary = D.summarize(nextRows);
       state.categories = nextCategories; state.rows = nextRows; state.allSummary = nextAllSummary;
+      state.sourceRows = nextSource; state.localCategories = nextLocal; state.categoryEdits = nextEdits;
       if (categoryFile) { state.categoryName = categoryFile.name; state.categoryDiagnostics = categories.diagnostics; }
       if (transactionFile) {
         state.loaded = true; state.transactionName = transactionFile.name; state.diagnostics = transactions.diagnostics;
+        state.datasetKey++;
+        state.editingRowId = null;
+        $('detailDialog').close();
+        $('detailContent').replaceChildren();
+        clearCategoryEditor();
         resetFilters(false);
         $('groupBy').value = nextAllSummary.calendarDays > 180 ? 'monthly' : 'daily';
       }
@@ -180,9 +239,13 @@
       if (state.loaded) {
         state.filters.categoryId = $('categoryId').value;
         state.filters.method = $('method').value;
-        state.filtered = D.filterTransactions(state.rows, state.filters);
+        state.filtered = filteredRows();
         state.summary = D.summarize(state.filtered);
         render();
+        if (!transactionFile && $('detailDialog').open && state.editingRowId) {
+          const openRow = state.rows.find(row => row.id === state.editingRowId);
+          if (openRow) openDetails(openRow);
+        }
       }
       const messages = loaded.map(file => `«${file.name}» خوانده شد.`);
       for (const diagnostic of [transactions?.diagnostics, categories?.diagnostics].filter(Boolean)) {
@@ -218,12 +281,17 @@
     if (f.endDate) descriptions.push(`تا ${formatDay(f.endDate)}`);
     if (f.minAmount != null) descriptions.push(`حداقل ${money(f.minAmount)} ${unit()}`);
     if (f.maxAmount != null) descriptions.push(`حداکثر ${money(f.maxAmount)} ${unit()}`);
+    if (state.drilldown) descriptions.push(`زیرمجموعه: ${state.drilldown.label}`);
     return descriptions;
   }
   function render() {
     $('welcome').hidden = state.loaded; $('dashboard').hidden = !state.loaded;
     document.querySelectorAll('.unit-label').forEach(node => { node.textContent = unit(); });
     if (!state.loaded) return;
+    $('drilldownBar').hidden = !state.drilldown;
+    $('drilldownLabel').textContent = state.drilldown ? `زیرمجموعه انتخاب‌شده: ${state.drilldown.label}` : '';
+    $('editsBar').hidden = state.categoryEdits.size === 0;
+    $('editsCount').textContent = `${number.format(state.categoryEdits.size)} اصلاح دسته‌بندی در حافظه صفحه`;
     const s = state.summary, all = state.allSummary;
     $('datasetInfo').textContent = `${number.format(all.count)} تراکنش در فایل · ${formatDay(all.firstDate)} تا ${formatDay(all.lastDate)} · ساعت تهران`;
     const importNodes = [el('span', '', state.transactionName || 'فایل تراکنش‌ها'),
@@ -248,7 +316,7 @@
       : all.lastBalance == null ? 'مانده‌ای در فایل ثبت نشده است.'
         : `آخرین مانده موجود در کل فایل: ${money(all.lastBalance)} ${unit()} در ${formatDay(D.dayKey(all.lastBalanceAt))}.`;
     $('balanceNote').textContent = `مانده ثبت‌شده، مقدار گزارش‌شده بانک پس از هر تراکنش است. ${lastBalance} این اطلاعات مستقل از فیلترهاست و کامل بودن صورت‌حساب یا موجودی فعلی را تأیید نمی‌کند.`;
-    renderCharts(); renderInsights(); renderReports(); renderTable();
+    renderCharts(); renderInsights(); renderReports(); renderTable(); renderAdvancedReports();
   }
   const chartBase = () => ({ responsive: true, maintainAspectRatio: false, animation: false,
     interaction: { mode: 'index', intersect: false },
@@ -388,6 +456,7 @@
     });
   }
   function openDetails(row) {
+    state.editingRowId = row.id;
     const raw = row.raw, supplementary = raw.supplementaryInfo || {};
     const pairs = [['تاریخ و ساعت تهران', `${row.dateLabel} · ${row.timeLabel}`], ['نوع تراکنش', row.direction === 'CREDIT' ? 'واریز' : 'برداشت'],
       ['مبلغ', `${money(row.amount)} ${unit()}`], ['مانده ثبت‌شده', row.balance == null ? 'ثبت نشده' : `${money(row.balance)} ${unit()}`],
@@ -401,7 +470,81 @@
       if (label === 'دسته‌بندی') content.replaceChildren(categoryChip(row));
       item.append(el('dt', '', label), content); return item;
     }));
-    $('detailDialog').showModal();
+    fillCategoryEditor(row);
+    if (!$('detailDialog').open) $('detailDialog').showModal();
+  }
+  function clearCategoryEditor() {
+    $('editCategorySelect').replaceChildren();
+    $('newCategoryName').value = '';
+    $('newCategoryColor').value = '#4776e5';
+    $('newCategoryFields').hidden = true;
+    $('categoryEditStatus').textContent = '';
+    $('undoCategoryEdit').disabled = true;
+  }
+  function fillCategoryEditor(row) {
+    clearCategoryEditor();
+    const available = new Map([...state.rows.map(item => [item.categoryId, item.category]),
+      ...allCategories().map(category => [category.id, category.name])]);
+    available.set(D.UNKNOWN_CATEGORY, 'بدون دسته‌بندی');
+    [...available.entries()].sort((a, b) => collator.compare(a[1], b[1])).forEach(([id, name]) => {
+      $('editCategorySelect').add(new Option(name, id));
+    });
+    $('editCategorySelect').add(new Option('＋ ساخت دسته‌بندی جدید', '__create__'));
+    $('editCategorySelect').value = row.categoryId;
+    $('undoCategoryEdit').disabled = !state.categoryEdits.has(row.id);
+    if (state.categoryEdits.has(row.id)) $('categoryEditStatus').textContent = 'دسته‌بندی این ردیف در همین صفحه اصلاح شده است.';
+  }
+  function saveCategoryEdit(event) {
+    event.preventDefault();
+    const source = state.sourceRows.find(row => row.id === state.editingRowId);
+    if (!source) return;
+    try {
+      let categoryId = $('editCategorySelect').value;
+      let created = null;
+      if (categoryId === '__create__') {
+        const name = $('newCategoryName').value.trim();
+        if (!name || name.length > 80) throw new Error('نام دسته باید بین ۱ تا ۸۰ نویسه باشد.');
+        const duplicates = [...allCategories().map(category => category.name), ...state.rows.map(row => row.category)];
+        if (duplicates.some(existing => D.normalizeSearch(existing) === D.normalizeSearch(name))) {
+          throw new Error('دسته‌ای با این نام وجود دارد؛ آن را از فهرست انتخاب کنید.');
+        }
+        const color = $('newCategoryColor').value;
+        if (!/^#[\da-f]{6}$/i.test(color)) throw new Error('رنگ دسته معتبر نیست.');
+        do { categoryId = `local-${++categorySequence}`; }
+        while (allCategories().some(category => category.id === categoryId) || state.rows.some(row => row.categoryId === categoryId));
+        created = { id: categoryId, name, color };
+      }
+      if (!categoryId) throw new Error('یک دسته‌بندی را انتخاب کنید.');
+      if (created) state.localCategories.push(created);
+      if (source.categoryId === categoryId) state.categoryEdits.delete(source.id);
+      else state.categoryEdits.set(source.id, categoryId);
+      refreshCategories();
+      openDetails(state.rows.find(row => row.id === source.id));
+      $('categoryEditStatus').textContent = 'دسته‌بندی ثبت شد و گزارش‌ها به‌روز شدند. برای نگهداری اصلاحات، خروجی فایل اصلاح‌شده را دریافت کنید.';
+    } catch (error) { $('categoryEditStatus').textContent = error.message; }
+  }
+  function undoCategoryEdit() {
+    const id = state.editingRowId;
+    state.categoryEdits.delete(id);
+    refreshCategories();
+    const row = state.rows.find(item => item.id === id);
+    if (row) openDetails(row);
+    $('categoryEditStatus').textContent = 'دسته‌بندی اصلی این تراکنش بازگردانده شد.';
+  }
+  function exportEditedData() {
+    const bundle = { format: 'baam-report-v1', version: 1,
+      transactions: state.rows.map(row => row.raw), categories: allCategories() };
+    downloadFile('baam-edited.json', JSON.stringify(bundle), 'application/json;charset=utf-8');
+  }
+  function selectReportRows({ rowIds, label }) {
+    state.drilldown = { rowIds: new Set(rowIds), label: String(label) };
+    refreshReport();
+    $('transactions').scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+  function selectReportDay(day) {
+    $('startDate').value = formatDay(day); $('endDate').value = formatDay(day);
+    applyFilters();
+    $('transactions').scrollIntoView({ block: 'start', behavior: 'smooth' });
   }
   function csvCell(value) {
     if (typeof value === 'number' && Number.isFinite(value)) return String(value);
@@ -412,7 +555,10 @@
   }
   function downloadCSV(name, rows) {
     const csv = '\uFEFF' + rows.map(row => row.map(csvCell).join(',')).join('\r\n');
-    const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
+    downloadFile(name, csv, 'text/csv;charset=utf-8');
+  }
+  function downloadFile(name, content, type) {
+    const url = URL.createObjectURL(new Blob([content], { type }));
     downloadUrls.add(url);
     const anchor = document.createElement('a'); anchor.href = url; anchor.download = name;
     document.body.append(anchor); anchor.click(); anchor.remove();
@@ -430,6 +576,7 @@
     for (const [type, groups] of [['کل', [{ ...s, label: 'کل محدوده انتخاب‌شده' }]], ['روزانه', s.daily], ['ماهانه', s.monthly], ['دسته‌بندی', s.categories], ['روش', s.methods]]) {
       for (const group of groups) rows.push([type, group.label || group.name, group.count, csvMoney(group.income), csvMoney(group.expense), csvMoney(group.net)]);
     }
+    rows.push([], ...reports.exportRows());
     downloadCSV(`baam-report-${state.unit}.csv`, rows);
   }
   let detailsBeforePrint = [];
@@ -438,16 +585,19 @@
     state.printing = true;
     detailsBeforePrint = [...document.querySelectorAll('details')].map(node => [node, node.open]);
     detailsBeforePrint.forEach(([node]) => { node.open = true; });
-    renderTable(); renderCharts(); Object.values(state.charts).forEach(instance => instance.resize());
+    renderTable(); renderCharts(); renderAdvancedReports(); Object.values(state.charts).forEach(instance => instance.resize());
   }
   function afterPrint() {
     if (!state.printing) return;
     state.printing = false;
     detailsBeforePrint.forEach(([node, open]) => { node.open = open; });
-    renderTable(); renderCharts(); Object.values(state.charts).forEach(instance => instance.resize());
+    renderTable(); renderCharts(); renderAdvancedReports(); Object.values(state.charts).forEach(instance => instance.resize());
   }
   Chart.defaults.font.family = 'Vazirmatn, Tahoma, sans-serif';
   Chart.defaults.color = '#8090a8';
+  reports = window.BaamReports.create({ mount: $('advancedReports'), money, number, signedMoney, categoryChip,
+    onDrilldown: selectReportRows, onDay: selectReportDay, onExportEdits: exportEditedData,
+    onEditCategory: id => { const row = state.rows.find(item => item.id === id); if (row) openDetails(row); } });
   setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   $('themeToggle').addEventListener('click', () => setTheme(state.theme === 'dark' ? 'light' : 'dark'));
   document.querySelectorAll('[data-open]').forEach(button => button.addEventListener('click', () => $(button.dataset.open).showModal()));
@@ -464,6 +614,16 @@
   $('filterForm').addEventListener('submit', event => { event.preventDefault(); applyFilters(); });
   $('search').addEventListener('input', () => { clearTimeout(searchTimer); searchTimer = setTimeout(applyFilters, 300); });
   $('resetFilters').addEventListener('click', () => resetFilters());
+  $('clearDrilldown').addEventListener('click', () => { state.drilldown = null; refreshReport(); });
+  $('categoryEditForm').addEventListener('submit', saveCategoryEdit);
+  $('editCategorySelect').addEventListener('change', () => { $('newCategoryFields').hidden = $('editCategorySelect').value !== '__create__'; });
+  $('undoCategoryEdit').addEventListener('click', undoCategoryEdit);
+  $('exportEditedJson').addEventListener('click', exportEditedData);
+  $('undoAllCategoryEdits').addEventListener('click', () => {
+    state.categoryEdits.clear(); state.localCategories = [];
+    refreshCategories();
+    notice('همه اصلاحات دسته‌بندی این جلسه بازگردانده شد.', true);
+  });
   $('unitSelect').addEventListener('change', () => {
     try {
       const bounds = ['minAmount', 'maxAmount'].map(id => [id, filterAmount($(id).value)]);
@@ -488,9 +648,13 @@
     document.body.removeAttribute('aria-busy');
     downloadUrls.forEach(url => URL.revokeObjectURL(url)); downloadUrls.clear();
     Object.values(state.charts).forEach(instance => instance.destroy()); state.charts = {};
-    state.rows = []; state.categories = []; state.filtered = []; state.summary = null; state.allSummary = null;
+    state.rows = []; state.sourceRows = []; state.categories = []; state.localCategories = []; state.categoryEdits.clear();
+    state.filtered = []; state.summary = null; state.allSummary = null; state.editingRowId = null;
     state.loaded = false; state.transactionName = ''; state.categoryName = ''; state.diagnostics = null; state.categoryDiagnostics = null;
     resetFilters(false); $('detailContent').replaceChildren(); $('importInfo').replaceChildren();
+    clearCategoryEditor(); reports.clear();
+    $('drilldownBar').hidden = true; $('drilldownLabel').textContent = '';
+    $('editsBar').hidden = true; $('editsCount').textContent = '';
     ['transactionsBody', 'periodBody', 'categoryReportBody', 'methodReportBody', 'insights', 'categoryLegend', 'datasetInfo', 'reportScope',
       'incomeValue', 'expenseValue', 'netValue', 'countValue', 'incomeCount', 'expenseCount', 'activeDays', 'categoryTotal',
       'tableCount', 'pageInfo', 'pageNumber', 'balanceNote', 'flowNote', 'methodNote', 'filterError'].forEach(id => $(id).replaceChildren());

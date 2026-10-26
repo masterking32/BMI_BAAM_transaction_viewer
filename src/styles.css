@@ -1978,3 +1978,54 @@ dialog>p {
 .unit-control {
   white-space:nowrap
 }
+
+.scope-banner {
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  flex-wrap:wrap;
+  gap:8px 18px;
+  padding:12px 16px;
+  margin-bottom:12px;
+  border:1px solid var(--line);
+  border-radius:9px;
+  background:color-mix(in srgb, var(--blue) 6%, var(--card));
+  color:var(--text);
+  font-size:11px;
+  overflow-wrap:anywhere
+}
+
+.scope-banner>div {
+  display:flex;
+  gap:8px 18px;
+  flex-wrap:wrap
+}
+
+.category-editor {
+  margin-top:22px;
+  padding-top:20px;
+  border-top:1px solid var(--line)
+}
+
+.category-editor>label {
+  display:block;
+  margin-top:15px
+}
+
+.new-category-fields {
+  display:grid;
+  grid-template-columns:minmax(0,1fr) 70px;
+  gap:12px;
+  margin-top:12px
+}
+
+.new-category-fields input[type="color"] {
+  padding:3px;
+  height:40px;
+  cursor:pointer
+}
+
+@media(max-width:400px) {
+  .sidebar nav { gap:1px }
+  .sidebar .nav-link { padding:7px }
+}

@@ -7,7 +7,7 @@
     "build": "node scripts/build.mjs",
     "build:check": "node scripts/build.mjs --check",
     "test": "node --test tests/*.test.js",
-    "test:browser": "node --test tests/browser.test.cjs"
+    "test:browser": "node --test tests/browser.test.cjs tests/reports.browser.test.cjs"
   },
   "engines": {
     "node": ">=20"

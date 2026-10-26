@@ -21,11 +21,13 @@ for (const dependency of manifest.dependencies) {
   }
 }
 
-const [template, styles, font, chart, data, app] = await Promise.all([
+const [template, baseStyles, font, chart, data, app, analytics, reports, reportStyles] = await Promise.all([
   read('src/template.html'), read('src/styles.css'),
   read('vendor/vazirmatn/Vazirmatn-variable.woff2', null),
   read('vendor/chart.js/chart.umd.min.js'), read('src/data.js'), read('src/app.js'),
+  read('src/analytics.js'), read('src/analytics-view.js'), read('src/analytics.css'),
 ]);
+const styles = `${baseStyles}\n${reportStyles}`;
 if (/<\/style/i.test(styles)) throw new Error('Unexpected closing style tag in CSS');
 
 // The browser HTML parser recognizes script end tags even inside JS strings.
@@ -37,19 +39,21 @@ const replacements = {
   FONT_DATA: font.toString('base64'),
   CHART_JS: inlineScript(chart),
   DATA_JS: inlineScript(data),
+  ANALYTICS_JS: inlineScript(analytics),
+  REPORTS_JS: inlineScript(reports),
   APP_JS: inlineScript(app),
 };
 let html = utf8(template);
 // FONT_DATA may live in the stylesheet instead of the HTML template.
 replacements.STYLES = replacements.STYLES.replaceAll('{{FONT_DATA}}', replacements.FONT_DATA);
-for (const key of ['STYLES', 'CHART_JS', 'DATA_JS', 'APP_JS']) {
+for (const key of ['STYLES', 'CHART_JS', 'DATA_JS', 'ANALYTICS_JS', 'REPORTS_JS', 'APP_JS']) {
   if (!html.includes(`{{${key}}}`)) throw new Error(`Missing template token: ${key}`);
 }
 html = html.replace(/\{\{([A-Z_]+)\}\}/g, (token, key) => {
   if (!(key in replacements)) throw new Error(`Unknown template token: ${token}`);
   return replacements[key];
 });
-if (/\{\{(?:STYLES|FONT_DATA|CHART_JS|DATA_JS|APP_JS)\}\}/.test(html)) {
+if (/\{\{(?:STYLES|FONT_DATA|CHART_JS|DATA_JS|ANALYTICS_JS|REPORTS_JS|APP_JS)\}\}/.test(html)) {
   throw new Error('Build contains unresolved template tokens');
 }
 
