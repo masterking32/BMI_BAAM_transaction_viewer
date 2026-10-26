@@ -181,6 +181,15 @@
     if (report.issues.length < issuesLimit) report.issues.push({ index: index + 1, reason });
   }
 
+  // A category keeps its color across sorting, filtering, and file reloads.
+  function categoryColor(id, suppliedColor) {
+    if (/^#[\da-f]{6}$/i.test(text(suppliedColor))) return text(suppliedColor);
+    if (id === UNKNOWN_CATEGORY) return '#8493a8';
+    let hash = 2166136261;
+    for (const char of String(id)) hash = Math.imul(hash ^ char.charCodeAt(0), 16777619) >>> 0;
+    return `hsl(${hash % 360}, 62%, 54%)`;
+  }
+
   function parseCategories(input) {
     const items = extractArray(input, 'categories');
     const report = diagnostics(items.length);
@@ -193,7 +202,7 @@
       }
       const id = text(item.id);
       if (byId.has(id)) { report.duplicateCount++; return; }
-      byId.set(id, { id, name: text(item.name), color: /^#[\da-f]{6}$/i.test(text(item.color)) ? text(item.color) : '#73879b' });
+      byId.set(id, { id, name: text(item.name), color: categoryColor(id, item.color) });
     });
     const categories = [...byId.values()];
     report.acceptedCount = categories.length;
@@ -209,7 +218,7 @@
     return {
       ...row,
       category: category?.name || text(row.raw?.categoryName) || (row.categoryId === UNKNOWN_CATEGORY ? 'بدون دسته‌بندی' : `دسته ${row.categoryId}`),
-      color: category?.color || '#73879b'
+      color: category?.color || categoryColor(row.categoryId)
     };
   }
 

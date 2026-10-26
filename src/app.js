@@ -7,11 +7,10 @@
   const percent = new Intl.NumberFormat('fa-IR', { maximumFractionDigits: 1, style: 'percent' });
   const compact = new Intl.NumberFormat('fa-IR', { notation: 'compact', maximumFractionDigits: 1 });
   const collator = new Intl.Collator('fa', { numeric: true });
-  const palette = ['#4776e5', '#33a7a0', '#a18ad2', '#e6b365', '#de7e8a', '#a0adc2'];
   const state = { rows: [], categories: [], filtered: [], summary: null, allSummary: null,
     loaded: false, transactionName: '', categoryName: '', diagnostics: null, categoryDiagnostics: null,
     filters: {}, unit: 'toman', sort: 'timestamp', ascending: false, page: 1, pageSize: 25,
-    charts: {}, printing: false };
+    charts: {}, printing: false, theme: 'light' };
   let importQueue = Promise.resolve();
   let importEpoch = 0;
   const downloadUrls = new Set();
@@ -41,6 +40,28 @@
     if (className) node.className = className;
     if (content !== undefined) node.textContent = String(content);
     return node;
+  }
+  function categoryChip(category) {
+    const chip = el('span', 'category-chip');
+    chip.style.setProperty('--category-color', category.color);
+    const dot = el('i', 'category-dot'); dot.setAttribute('aria-hidden', 'true');
+    chip.append(dot, el('span', 'category-name', category.category || category.name));
+    return chip;
+  }
+  function setTheme(theme) {
+    state.theme = theme;
+    document.documentElement.dataset.theme = theme;
+    const dark = theme === 'dark';
+    $('themeToggle').setAttribute('aria-pressed', String(dark));
+    $('themeToggle').title = dark ? 'تغییر به حالت روشن' : 'تغییر به حالت تیره';
+    $('themeIcon').textContent = dark ? '☾' : '☀';
+    $('themeLabel').textContent = dark ? 'تیره' : 'روشن';
+    if (state.loaded) renderCharts();
+  }
+  function chartColors() {
+    return state.theme === 'dark' && !state.printing
+      ? { text: '#afbdd0', grid: '#293340', surface: '#151b23', tooltip: '#29384b', line: '#8baaff', fill: '#8baaff16' }
+      : { text: '#7b8aa0', grid: '#f0f3f8', surface: '#ffffff', tooltip: '#263b59', line: '#4b77dc', fill: '#4b77dc10' };
   }
   function notice(message, success = false) {
     $('notice').textContent = message;
@@ -231,12 +252,12 @@
   }
   const chartBase = () => ({ responsive: true, maintainAspectRatio: false, animation: false,
     interaction: { mode: 'index', intersect: false },
-    plugins: { legend: { position: 'bottom', rtl: true, textDirection: 'rtl', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, boxHeight: 6, padding: 18, color: '#7b8aa0', font: { size: 10 } } },
-      tooltip: { rtl: true, textDirection: 'rtl', backgroundColor: '#263b59', padding: 12,
+    plugins: { legend: { position: 'bottom', rtl: true, textDirection: 'rtl', labels: { usePointStyle: true, pointStyle: 'circle', boxWidth: 6, boxHeight: 6, padding: 18, color: chartColors().text, font: { size: 10 } } },
+      tooltip: { rtl: true, textDirection: 'rtl', backgroundColor: chartColors().tooltip, titleColor: '#fff', bodyColor: '#fff', padding: 12,
         titleFont: { family: 'Vazirmatn' }, bodyFont: { family: 'Vazirmatn', size: 11 },
         callbacks: { label: context => `${context.dataset.label}: ${money(context.dataset.rialValues[context.dataIndex])} ${unit()}` } } },
-    scales: { x: { grid: { display: false }, ticks: { color: '#8c99ad', maxRotation: 0, maxTicksLimit: 8, font: { size: 9 } }, border: { display: false } },
-      y: { beginAtZero: true, grid: { color: '#f0f3f8' }, border: { display: false }, ticks: { color: '#8c99ad', maxTicksLimit: 5, font: { size: 9 }, callback: value => compact.format(value) } } } });
+    scales: { x: { grid: { display: false }, ticks: { color: chartColors().text, maxRotation: 0, maxTicksLimit: 8, font: { size: 9 } }, border: { display: false } },
+      y: { beginAtZero: true, grid: { color: chartColors().grid }, border: { display: false }, ticks: { color: chartColors().text, maxTicksLimit: 5, font: { size: 9 }, callback: value => compact.format(value) } } } });
   function chart(id, config) {
     state.charts[id]?.destroy();
     state.charts[id] = new Chart($(id), config);
@@ -245,7 +266,7 @@
     const sorted = groups.filter(group => group[field] > 0).sort((a, b) => b[field] - a[field]);
     if (sorted.length <= limit) return sorted;
     const rest = sorted.slice(limit - 1);
-    return [...sorted.slice(0, limit - 1), { key: '__other__', name: 'سایر دسته‌ها', label: 'سایر دسته‌ها',
+    return [...sorted.slice(0, limit - 1), { key: '__other__', name: 'سایر دسته‌ها', label: 'سایر دسته‌ها', color: '#8493a8',
       [field]: rest.reduce((sum, row) => D.safeAdd(sum, row[field]), 0) }];
   }
   function renderCharts() {
@@ -264,13 +285,13 @@
     $('categoryTotal').textContent = money(total);
     chart('categoryChart', { type: 'doughnut', data: { labels: cats.map(row => row.name), datasets: [{
       label: metric === 'expense' ? 'برداشت' : 'واریز', data: cats.map(row => row[metric] / factor),
-      backgroundColor: palette.slice(0, cats.length), borderColor: '#fff', borderWidth: 4, hoverOffset: 3
+      backgroundColor: cats.map(row => row.color), borderColor: chartColors().surface, borderWidth: 4, hoverOffset: 3
     }] }, options: { responsive: true, maintainAspectRatio: false, animation: false, cutout: '78%',
-      plugins: { legend: { display: false }, tooltip: { rtl: true, textDirection: 'rtl', callbacks: {
+      plugins: { legend: { display: false }, tooltip: { rtl: true, textDirection: 'rtl', backgroundColor: chartColors().tooltip, titleColor: '#fff', bodyColor: '#fff', callbacks: {
         label: context => `${context.label}: ${money(cats[context.dataIndex][metric])} ${unit()} (${percent.format(total ? cats[context.dataIndex][metric] / total : 0)})`
       } } } } });
-    const legends = cats.map((row, i) => {
-      const item = el('div', 'legend-row'), dot = el('i'); dot.style.backgroundColor = palette[i];
+    const legends = cats.map(row => {
+      const item = el('div', 'legend-row'), dot = el('i'); dot.style.backgroundColor = row.color;
       const name = el('button', '', row.name); name.type = 'button'; name.title = row.name;
       if (row.id != null) name.addEventListener('click', () => { $('categoryId').value = row.id; applyFilters(); });
       else { name.disabled = true; name.style.opacity = '1'; }
@@ -283,7 +304,7 @@
     const netOptions = chartBase(); netOptions.plugins.legend.display = false;
     chart('netChart', { type: 'line', data: { labels: ['شروع', ...series.map(row => row.label)], datasets: [{
       label: 'خالص تجمعی', data: cumulativeRials.map(amount => amount / factor), rialValues: cumulativeRials,
-      borderColor: '#4b77dc', backgroundColor: '#4b77dc10', fill: true, pointRadius: series.length < 15 ? 2 : 0,
+      borderColor: chartColors().line, backgroundColor: chartColors().fill, fill: true, pointRadius: series.length < 15 ? 2 : 0,
       pointHitRadius: 10, borderWidth: 2, tension: 0
     }] }, options: netOptions });
     const methods = s.methods.slice(0, 5).map(row => ({ ...row }));
@@ -291,7 +312,7 @@
       income: D.safeAdd(sum.income, row.income), expense: D.safeAdd(sum.expense, row.expense) }), { income: 0, expense: 0 }));
     const methodOptions = chartBase(); methodOptions.indexAxis = 'y';
     methodOptions.scales.x = { ...methodOptions.scales.y, stacked: true };
-    methodOptions.scales.y = { grid: { display: false }, border: { display: false }, ticks: { font: { size: 9 }, color: '#7d8ca3' }, stacked: true };
+    methodOptions.scales.y = { grid: { display: false }, border: { display: false }, ticks: { font: { size: 9 }, color: chartColors().text }, stacked: true };
     chart('methodChart', { type: 'bar', data: { labels: methods.map(row => row.name.length > 24 ? row.name.slice(0, 22) + '…' : row.name), datasets: [
       { label: 'واریز', data: methods.map(row => row.income / factor), rialValues: methods.map(row => row.income), backgroundColor: '#33a398', maxBarThickness: 15, borderRadius: 3 },
       { label: 'برداشت', data: methods.map(row => row.expense / factor), rialValues: methods.map(row => row.expense), backgroundColor: '#7393e7', maxBarThickness: 15, borderRadius: 3 }
@@ -312,7 +333,9 @@
   function renderReportRows(id, groups) {
     const nodes = groups.map(group => {
       const tr = el('tr');
-      tr.append(el('td', '', group.label || group.name), el('td', '', number.format(group.count)),
+      const name = el('td', '', group.label || group.name);
+      if (id === 'categoryReportBody') name.replaceChildren(categoryChip(group));
+      tr.append(name, el('td', '', number.format(group.count)),
         el('td', 'money credit', money(group.income)), el('td', 'money debit', money(group.expense)), el('td', 'money', signedMoney(group.net)));
       return tr;
     });
@@ -343,7 +366,7 @@
       const tr = el('tr'), date = el('td', '', row.dateLabel); date.append(el('span', 'cell-secondary', row.timeLabel));
       const description = el('td', 'description-cell', row.description); description.title = row.description;
       description.append(el('span', 'cell-secondary', row.method));
-      const category = el('td'); category.append(el('span', 'category-chip', row.category)); category.title = row.category;
+      const category = el('td'); category.append(categoryChip(row)); category.title = row.category;
       const direction = el('td'), isCredit = row.direction === 'CREDIT';
       direction.append(el('span', `direction-chip ${isCredit ? 'credit' : 'debit'}`, isCredit ? '↙ واریز' : '↗ برداشت'));
       const details = el('td'), button = el('button', 'row-detail', 'جزئیات'); button.type = 'button';
@@ -374,7 +397,9 @@
       ['شعبه', raw.branchName || raw.branchCode], ['توضیحات تکمیلی', raw.additionalData1], ['توضیحات تکمیلی دوم', raw.additionalData2], ['یادداشت', row.comment]];
     $('detailContent').replaceChildren(...pairs.filter(([, value]) => value != null && value !== '').map(([label, value]) => {
       const item = el('div', label === 'یادداشت' || label.startsWith('توضیحات') ? 'wide' : '');
-      item.append(el('dt', '', label), el('dd', '', value)); return item;
+      const content = el('dd', '', value);
+      if (label === 'دسته‌بندی') content.replaceChildren(categoryChip(row));
+      item.append(el('dt', '', label), content); return item;
     }));
     $('detailDialog').showModal();
   }
@@ -413,16 +438,18 @@
     state.printing = true;
     detailsBeforePrint = [...document.querySelectorAll('details')].map(node => [node, node.open]);
     detailsBeforePrint.forEach(([node]) => { node.open = true; });
-    renderTable(); Object.values(state.charts).forEach(instance => instance.resize());
+    renderTable(); renderCharts(); Object.values(state.charts).forEach(instance => instance.resize());
   }
   function afterPrint() {
     if (!state.printing) return;
     state.printing = false;
     detailsBeforePrint.forEach(([node, open]) => { node.open = open; });
-    renderTable(); Object.values(state.charts).forEach(instance => instance.resize());
+    renderTable(); renderCharts(); Object.values(state.charts).forEach(instance => instance.resize());
   }
   Chart.defaults.font.family = 'Vazirmatn, Tahoma, sans-serif';
   Chart.defaults.color = '#8090a8';
+  setTheme(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  $('themeToggle').addEventListener('click', () => setTheme(state.theme === 'dark' ? 'light' : 'dark'));
   document.querySelectorAll('[data-open]').forEach(button => button.addEventListener('click', () => $(button.dataset.open).showModal()));
   document.querySelectorAll('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
   document.querySelectorAll('.nav-link[href]').forEach(link => link.addEventListener('click', () => {

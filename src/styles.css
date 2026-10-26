@@ -1,4 +1,5 @@
 :root {
+  color-scheme:light;
   --bg:#f5f7fb;
   --card:#fff;
   --text:#1c2c43;
@@ -807,15 +808,188 @@ tbody tr:last-child td {
 
 .category-chip {
   font-size:9px;
-  background:#f0f3f9;
-  color:#62738d;
+  background:color-mix(in srgb, var(--category-color) 12%, var(--card));
+  color:var(--text);
+  border:1px solid color-mix(in srgb, var(--category-color) 30%, var(--line));
   border-radius:5px;
   padding:4px 8px;
   max-width:155px;
-  display:inline-block;
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
   overflow:hidden;
   text-overflow:ellipsis;
   vertical-align:middle
+}
+
+.category-name {
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap
+}
+
+.category-dot {
+  display:inline-block;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  flex-shrink:0;
+  background:var(--category-color)
+}
+
+.category-dot,.legend-row i {
+  box-shadow:0 0 0 1px #80808050
+}
+
+.theme-toggle {
+  min-width:76px
+}
+
+#themeIcon {
+  font-family:Tahoma,sans-serif;
+  font-size:19px;
+  line-height:1
+}
+
+.report-table .category-chip,.detail-grid .category-chip {
+  max-width:none
+}
+
+/* Dark colors apply only to the screen; paper always uses the light palette. */
+@media screen {
+  :root[data-theme="dark"] {
+    color-scheme:dark;
+    --bg:#0b0f14;
+    --card:#151b23;
+    --text:#e3eaf4;
+    --muted:#a0aec0;
+    --line:#2a3441;
+    --blue:#8cabff;
+    --blue-soft:#22314f;
+    --green:#57cdb0;
+    --red:#f18c98;
+    --shadow:0 4px 24px #00000018;
+    --surface:#1c2530
+  }
+
+  [data-theme="dark"] :is(.sidebar,.topbar,.import-info span,.filter-panel,input,select,.kpi,.panel,.empty-state,.upload-card,.row-detail,.skip-link,dialog) {
+    background:var(--card);
+    border-color:var(--line)
+  }
+
+  [data-theme="dark"] :is(.unit-control select,.panel-heading select,.icon-button,.kpi-heading>span,.small-badge,.insight-card,th,.welcome-tags span,.file-box,.help-content code) {
+    background:var(--surface);
+    border-color:var(--line)
+  }
+
+  [data-theme="dark"] :is(label,.nav-link,.breadcrumb strong,.button:not(.primary):not(.dark),.icon-button,.kpi-heading,.legend-row,.insight-card strong,.row-detail,.supplementary-report summary,.report-table caption,.welcome-footer strong,.file-box strong,.help-content code) {
+    color:#c0cbdb
+  }
+
+  [data-theme="dark"] :is(.nav-caption,.version,.kpi-foot,.import-info,.filter-grid label>.unit-label,.cell-secondary,.legend-percent,.insight-card small,th,th button span,.data-note,.footer,.footer a,.welcome-tags span,.upload-card small,.file-box>span) {
+    color:var(--muted)
+  }
+
+  [data-theme="dark"] .legend-row .legend-value {
+    color:var(--text)
+  }
+
+  [data-theme="dark"] .button:not(.primary):not(.dark) {
+    background:var(--surface);
+    border-color:var(--line)
+  }
+
+  [data-theme="dark"] .button.primary {
+    background:#3965d3;
+    border-color:#3965d3
+  }
+
+  [data-theme="dark"] .button.primary:hover {
+    background:#4876e6
+  }
+
+  [data-theme="dark"] .button.dark {
+    background:#304b75;
+    border-color:#3b5986
+  }
+
+  [data-theme="dark"] :is(.nav-link:hover,tbody tr:hover,.button:not(.primary):not(.dark):hover) {
+    background:#243040
+  }
+
+  [data-theme="dark"] .nav-link.active {
+    background:var(--blue-soft);
+    color:var(--blue)
+  }
+
+  [data-theme="dark"] :is(.income .kpi-heading>span,.direction-chip.credit) {
+    background:#173b34;
+    color:var(--green)
+  }
+
+  [data-theme="dark"] :is(.expense .kpi-heading>span,.direction-chip.debit) {
+    background:#3b252e;
+    color:var(--red)
+  }
+
+  [data-theme="dark"] td {
+    border-color:#242e3a
+  }
+
+  [data-theme="dark"] .table-scroll {
+    scrollbar-color:#43526a transparent
+  }
+
+  [data-theme="dark"] input::placeholder {
+    color:#8f9eb3
+  }
+
+  [data-theme="dark"] .field-error {
+    color:var(--red)
+  }
+
+  [data-theme="dark"] :is(.upload-icon,.upload-card.dragging) {
+    background:var(--blue-soft);
+    border-color:#354e79
+  }
+
+  [data-theme="dark"] .local-badge {
+    color:#8dcbb7
+  }
+
+  [data-theme="dark"] .notice {
+    background:#332b1e;
+    border-color:#665032;
+    color:#efcc94
+  }
+
+  [data-theme="dark"] .notice.success {
+    background:#19342b;
+    border-color:#325b4b;
+    color:#97d9b8
+  }
+
+  [data-theme="dark"] dialog::backdrop {
+    background:#00000099
+  }
+
+  [data-theme="dark"] ::selection {
+    background:#3b5585;
+    color:#fff
+  }
+}
+
+@media(max-width:400px) {
+  .topbar .breadcrumb {
+    display:none
+  }
+  .top-actions {
+    width:100%;
+    justify-content:space-between
+  }
+  .theme-toggle {
+    min-width:65px
+  }
 }
 
 .direction-chip {

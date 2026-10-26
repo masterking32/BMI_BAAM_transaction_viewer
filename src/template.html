@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="color-scheme" content="light">
+  <meta name="color-scheme" content="light dark">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
   <title>بام‌نما | گزارش و تحلیل تراکنش‌های بام</title>
   <style>@font-face{font-family:Vazirmatn;src:url(data:font/woff2;base64,{{FONT_DATA}}) format('woff2');font-weight:100 900;font-display:swap}{{STYLES}}</style>
@@ -22,7 +22,7 @@
     <div class="sidebar-bottom"><div class="local-badge"><i></i> پردازش کاملاً روی دستگاه</div><p>اطلاعات بانکی شما فقط در حافظه همین مرورگر پردازش می‌شود.</p><span class="version">نسخه ۲ · مستقل و آفلاین</span></div>
   </aside>
   <div class="workspace">
-    <header class="topbar no-print"><div class="breadcrumb">ابزارهای مالی <span>/</span> <strong>تحلیل گردش حساب</strong></div><div class="top-actions"><label class="unit-control" for="unitSelect">واحد نمایش <select id="unitSelect"><option value="toman">تومان</option><option value="rial">ریال</option></select></label><button class="button primary compact" type="button" data-open="importDialog"><span aria-hidden="true">＋</span> ورود فایل</button></div></header>
+    <header class="topbar no-print"><div class="breadcrumb">ابزارهای مالی <span>/</span> <strong>تحلیل گردش حساب</strong></div><div class="top-actions"><button id="themeToggle" class="button compact theme-toggle" type="button" aria-label="حالت تیره" aria-pressed="false" title="تغییر به حالت تیره"><span id="themeIcon" aria-hidden="true">☀</span><span id="themeLabel">روشن</span></button><label class="unit-control" for="unitSelect">واحد نمایش <select id="unitSelect"><option value="toman">تومان</option><option value="rial">ریال</option></select></label><button class="button primary compact" type="button" data-open="importDialog"><span aria-hidden="true">＋</span> ورود فایل</button></div></header>
     <main id="main">
       <div id="notice" class="notice" role="alert" hidden></div>
       <section id="welcome" class="welcome">
