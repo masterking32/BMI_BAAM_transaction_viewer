@@ -2332,6 +2332,42 @@ dialog>p {
   font-size:9px;
   margin-top:3px
 }
+.analytics-day .calendar-amount {
+  padding:3px 2px;
+  border-radius:4px;
+  background:var(--card);
+  font-size:10px;
+  font-weight:600;
+  line-height:1.5;
+  overflow-wrap:anywhere
+}
+.calendar-income,.calendar-income-key {
+  color:color-mix(in srgb,var(--green) 85%,var(--text))
+}
+.calendar-expense,.calendar-expense-key {
+  color:color-mix(in srgb,var(--red) 85%,var(--text))
+}
+.calendar-amount bdi {
+  direction:ltr;
+  unicode-bidi:isolate
+}
+.calendar-amount-compact,.calendar-compact-hint {
+  display:none
+}
+.calendar-amount-legend {
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:center;
+  gap:10px 18px;
+  margin:12px 0;
+  font-size:11px;
+  font-weight:600
+}
+#calendarUnit {
+  color:var(--muted);
+  font-weight:400
+}
 .analytics-day[data-level="1"],.analytics-heat-legend [data-level="1"] {
   background:color-mix(in srgb,var(--blue) 13%,var(--card))
 }
@@ -2527,6 +2563,24 @@ dialog>p {
     font-size:7px;
     letter-spacing:-.2px
   }
+  .analytics-day .calendar-amount {
+    padding:3px 0;
+    font-size:8px;
+    letter-spacing:0
+  }
+  .calendar-amount-full {
+    display:none
+  }
+  .calendar-amount-compact,.calendar-compact-hint {
+    display:block
+  }
+  .calendar-amount-compact bdi,.calendar-amount-suffix {
+    display:block
+  }
+  .calendar-amount-suffix {
+    font-size:7px;
+    font-weight:400
+  }
   .analytics-pagination {
     flex-wrap:wrap
   }
@@ -2583,6 +2637,12 @@ dialog>p {
   .analytics-day strong {
     font-size:13px
   }
+  .calendar-amount-full {
+    display:inline
+  }
+  .calendar-amount-compact,.calendar-compact-hint {
+    display:none
+  }
 }
 </style>
 <script type="application/json" id="third-party-licenses">[{"name":"Chart.js","version":"4.6.1","license":"MIT","source":"https://registry.npmjs.org/chart.js/-/chart.js-4.6.1.tgz","texts":["The MIT License (MIT)\n\nCopyright (c) 2014-2024 Chart.js Contributors\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n","The MIT License (MIT)\n\nCopyright (c) 2018-2021 Jukka Kurkela\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the \"Software\"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n"]},{"name":"Vazirmatn","version":"33.0.3","license":"OFL-1.1","source":"https://registry.npmjs.org/vazirmatn/-/vazirmatn-33.0.3.tgz","texts":["Copyright 2015 The Vazirmatn Project Authors (https://github.com/rastikerdar/vazirmatn)\n\nThis Font Software is licensed under the SIL Open Font License, Version 1.1.\nThis license is copied below, and is also available with a FAQ at:\nhttp://scripts.sil.org/OFL\n\n\n-----------------------------------------------------------\nSIL OPEN FONT LICENSE Version 1.1 - 26 February 2007\n-----------------------------------------------------------\n\nPREAMBLE\nThe goals of the Open Font License (OFL) are to stimulate worldwide\ndevelopment of collaborative font projects, to support the font creation\nefforts of academic and linguistic communities, and to provide a free and\nopen framework in which fonts may be shared and improved in partnership\nwith others.\n\nThe OFL allows the licensed fonts to be used, studied, modified and\nredistributed freely as long as they are not sold by themselves. The\nfonts, including any derivative works, can be bundled, embedded,\nredistributed and/or sold with any software provided that any reserved\nnames are not used by derivative works. The fonts and derivatives,\nhowever, cannot be released under any other type of license. The\nrequirement for fonts to remain under this license does not apply\nto any document created using the fonts or their derivatives.\n\nDEFINITIONS\n\"Font Software\" refers to the set of files released by the Copyright\nHolder(s) under this license and clearly marked as such. This may\ninclude source files, build scripts and documentation.\n\n\"Reserved Font Name\" refers to any names specified as such after the\ncopyright statement(s).\n\n\"Original Version\" refers to the collection of Font Software components as\ndistributed by the Copyright Holder(s).\n\n\"Modified Version\" refers to any derivative made by adding to, deleting,\nor substituting -- in part or in whole -- any of the components of the\nOriginal Version, by changing formats or by porting the Font Software to a\nnew environment.\n\n\"Author\" refers to any designer, engineer, programmer, technical\nwriter or other person who contributed to the Font Software.\n\nPERMISSION & CONDITIONS\nPermission is hereby granted, free of charge, to any person obtaining\na copy of the Font Software, to use, study, copy, merge, embed, modify,\nredistribute, and sell modified and unmodified copies of the Font\nSoftware, subject to the following conditions:\n\n1) Neither the Font Software nor any of its individual components,\nin Original or Modified Versions, may be sold by itself.\n\n2) Original or Modified Versions of the Font Software may be bundled,\nredistributed and/or sold with any software, provided that each copy\ncontains the above copyright notice and this license. These can be\nincluded either as stand-alone text files, human-readable headers or\nin the appropriate machine-readable metadata fields within text or\nbinary files as long as those fields can be easily viewed by the user.\n\n3) No Modified Version of the Font Software may use the Reserved Font\nName(s) unless explicit written permission is granted by the corresponding\nCopyright Holder. This restriction only applies to the primary font name as\npresented to the users.\n\n4) The name(s) of the Copyright Holder(s) or the Author(s) of the Font\nSoftware shall not be used to promote, endorse or advertise any\nModified Version, except to acknowledge the contribution(s) of the\nCopyright Holder(s) and the Author(s) or with their explicit written\npermission.\n\n5) The Font Software, modified or unmodified, in part or in whole,\nmust be distributed entirely under this license, and must not be\ndistributed under any other license. The requirement for fonts to\nremain under this license does not apply to any document created\nusing the Font Software.\n\nTERMINATION\nThis license becomes null and void if any of the above conditions are\nnot met.\n\nDISCLAIMER\nTHE FONT SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND,\nEXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO ANY WARRANTIES OF\nMERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT\nOF COPYRIGHT, PATENT, TRADEMARK, OR OTHER RIGHT. IN NO EVENT SHALL THE\nCOPYRIGHT HOLDER BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,\nINCLUDING ANY GENERAL, SPECIAL, INDIRECT, INCIDENTAL, OR CONSEQUENTIAL\nDAMAGES, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING\nFROM, OUT OF THE USE OR INABILITY TO USE THE FONT SOFTWARE OR FROM\nOTHER DEALINGS IN THE FONT SOFTWARE.\n"]}]</script>
@@ -2626,7 +2686,7 @@ dialog>p {
             <label>حداقل مبلغ <span class="unit-label">تومان</span><input id="minAmount" inputmode="decimal" placeholder="بدون حداقل" dir="ltr"></label>
             <label>حداکثر مبلغ <span class="unit-label">تومان</span><input id="maxAmount" inputmode="decimal" placeholder="بدون حداکثر" dir="ltr"></label>
             <button id="applyFilters" class="button dark" type="submit">اعمال فیلتر <span aria-hidden="true">←</span></button>
-          </div><p class="field-hint" id="dateHint">تاریخ با قالب سال/ماه/روز؛ ابتدا و انتهای بازه شامل گزارش می‌شوند. گزارش‌ها از این فیلترها پیروی می‌کنند؛ مقایسه بازه‌ها تاریخ مستقل دارد.</p><p id="filterError" class="field-error" role="alert" hidden></p>
+          </div><p class="field-hint" id="dateHint">تاریخ با قالب سال/ماه/روز؛ ابتدا و انتهای بازه شامل گزارش می‌شوند. گزارش‌ها از این فیلترها پیروی می‌کنند؛ مقایسه بازه‌ها و ماه تقویم تاریخ مستقل دارند.</p><p id="filterError" class="field-error" role="alert" hidden></p>
         </form></section>
         <div id="drilldownBar" class="scope-banner no-print" hidden><span id="drilldownLabel"></span><button id="clearDrilldown" type="button" class="text-button">حذف زیرمجموعه ×</button></div>
         <div id="editsBar" class="scope-banner no-print" hidden><span id="editsCount"></span><div><button id="exportEditedJson" class="text-button" type="button">↓ خروجی فایل اصلاح‌شده (همه تراکنش‌ها)</button><button id="undoAllCategoryEdits" class="text-button danger" type="button">بازگردانی همه اصلاحات</button></div></div>
@@ -2668,7 +2728,7 @@ dialog>p {
     </form>
     <div class="dialog-actions"><button class="button" type="button" data-close>بستن جزئیات</button></div>
   </dialog>
-  <dialog id="helpDialog" aria-labelledby="helpTitle"><div class="dialog-heading"><h2 id="helpTitle">راهنمای بام‌نما</h2><button class="icon-button" type="button" data-close aria-label="بستن">×</button></div><div class="help-content"><h3>۱. فایل‌ها را دریافت کنید</h3><p>در مرورگر خود وارد بام شوید. این ابزار فقط فایل JSON خروجی تراکنش‌ها و فایل اختیاری دسته‌بندی را می‌خواند؛ به حساب شما متصل نمی‌شود.</p><p>مسیر دسته‌بندی در نسخه‌ای از بام که این ابزار برای آن ساخته شده:</p><code dir="ltr">https://baam.bmi.ir/api/v1/pfm/transaction-category</code><p>برای دریافت تراکنش‌ها از مسیر زیر، شماره حساب و تاریخ شروع میلادی را جایگزین کنید. پاسخ را با پسوند <bdi>.json</bdi> ذخیره کنید.</p><code dir="ltr">https://baam.bmi.ir/api/account-statement/v1/transactions?accountNumber=ACCOUNT_NUMBER&amp;sort=false&amp;pageNumber=1&amp;pageSize=99999&amp;date_gt=2026-01-01T00%3A00%3A00.000Z&amp;sortType=DESC</code><p class="field-hint">این مسیرها وابسته به نسخه و دسترسی بام هستند و ممکن است تغییر کنند. کامل بودن پاسخ و محدودیت تعداد رکورد را در بام بررسی کنید.</p><h3>۲. گزارش را بسازید</h3><p>فایل‌ها را در صفحه شروع انتخاب کنید یا از «ورود فایل» استفاده کنید. دسته‌بندی اختیاری است. واحد اصلی داده‌ها ریال است؛ نمایش تومان بدون گرد کردن اجباری انجام می‌شود.</p><h3>۳. محدوده را مشخص کنید</h3><p>جست‌وجو و فیلتر تاریخ شمسی، مبلغ، دسته و روش روی گزارش‌ها اعمال می‌شوند. بخش مقایسه بازه‌ها از چهار تاریخ مستقل خود استفاده می‌کند و سایر فیلترها را رعایت می‌کند. تاریخ و ساعت بر اساس تهران است. خروجی CSV شامل همه ردیف‌های فیلترشده با ترتیب جدول است.</p><h3>۴. گزارش‌های پیشرفته و اصلاح دسته‌ها</h3><p>از بخش تحلیل پیشرفته، دو بازه هم‌طول را مقایسه کنید، طرف حساب‌ها و الگوهای تکرار را ببینید یا یک روز از تقویم شمسی را انتخاب کنید. هر نشانه نیازمند بررسی، دلیل مشخص و دکمه مشاهده تراکنش‌ها دارد. این نشانه‌ها تشخیص خطا یا تقلب نیستند.</p><p>در جزئیات تراکنش می‌توانید دسته آن را تغییر دهید یا دسته جدید بسازید. اصلاحات قابل بازگردانی هستند. برای نگهداری آن‌ها خروجی JSON فایل اصلاح‌شده را دریافت کنید؛ این خروجی شامل همه رکوردهای پذیرفته‌شده است و دوباره وارد همین ابزار می‌شود. گزارش CSV شامل بازه‌های مستقل مقایسه نیز هست.</p><h3>معنای اعداد گزارش</h3><p>واریز و برداشت بر اساس جهت ثبت‌شده تراکنش محاسبه می‌شوند؛ عنوان دسته تعیین‌کننده جهت نیست. «خالص گردش» برابر واریز منهای برداشت است و الزاماً سود، درآمد یا مانده واقعی حساب نیست. روزهای فاقد رکورد در نمودار صفر نمایش داده می‌شوند؛ این به معنی تأیید کامل بودن صورت‌حساب نیست.</p><h3>حریم خصوصی</h3><p>فایل‌ها فقط در حافظه همین صفحه نگهداری می‌شوند؛ با بستن یا بازخوانی صفحه پاک می‌شوند. هیچ تحلیل‌گر، سرویس خارجی یا ذخیره‌سازی خودکاری وجود ندارد. خروجی‌های CSV و چاپ شامل اطلاعات محدوده انتخاب‌شده شما هستند.</p></div><div class="dialog-actions"><button class="button primary" type="button" data-close>متوجه شدم</button></div></dialog>
+  <dialog id="helpDialog" aria-labelledby="helpTitle"><div class="dialog-heading"><h2 id="helpTitle">راهنمای بام‌نما</h2><button class="icon-button" type="button" data-close aria-label="بستن">×</button></div><div class="help-content"><h3>۱. فایل‌ها را دریافت کنید</h3><p>در مرورگر خود وارد بام شوید. این ابزار فقط فایل JSON خروجی تراکنش‌ها و فایل اختیاری دسته‌بندی را می‌خواند؛ به حساب شما متصل نمی‌شود.</p><p>مسیر دسته‌بندی در نسخه‌ای از بام که این ابزار برای آن ساخته شده:</p><code dir="ltr">https://baam.bmi.ir/api/v1/pfm/transaction-category</code><p>برای دریافت تراکنش‌ها از مسیر زیر، شماره حساب و تاریخ شروع میلادی را جایگزین کنید. پاسخ را با پسوند <bdi>.json</bdi> ذخیره کنید.</p><code dir="ltr">https://baam.bmi.ir/api/account-statement/v1/transactions?accountNumber=ACCOUNT_NUMBER&amp;sort=false&amp;pageNumber=1&amp;pageSize=99999&amp;date_gt=2026-01-01T00%3A00%3A00.000Z&amp;sortType=DESC</code><p class="field-hint">این مسیرها وابسته به نسخه و دسترسی بام هستند و ممکن است تغییر کنند. کامل بودن پاسخ و محدودیت تعداد رکورد را در بام بررسی کنید.</p><h3>۲. گزارش را بسازید</h3><p>فایل‌ها را در صفحه شروع انتخاب کنید یا از «ورود فایل» استفاده کنید. دسته‌بندی اختیاری است. واحد اصلی داده‌ها ریال است؛ نمایش تومان بدون گرد کردن اجباری انجام می‌شود.</p><h3>۳. محدوده را مشخص کنید</h3><p>جست‌وجو و فیلتر تاریخ شمسی، مبلغ، دسته و روش روی گزارش‌ها اعمال می‌شوند. بخش مقایسه بازه‌ها از چهار تاریخ مستقل خود استفاده می‌کند. تقویم هم کل ماه انتخابی را نشان می‌دهد و با انتخاب یک روز، اطلاعات روزهای دیگر آن حفظ می‌شود. سایر فیلترها در هر دو بخش اعمال می‌شوند. تاریخ و ساعت بر اساس تهران است. خروجی CSV شامل همه ردیف‌های فیلترشده با ترتیب جدول است.</p><h3>۴. گزارش‌های پیشرفته و اصلاح دسته‌ها</h3><p>از بخش تحلیل پیشرفته، دو بازه هم‌طول را مقایسه کنید، طرف حساب‌ها و الگوهای تکرار را ببینید یا یک روز از تقویم شمسی را انتخاب کنید. هر نشانه نیازمند بررسی، دلیل مشخص و دکمه مشاهده تراکنش‌ها دارد. این نشانه‌ها تشخیص خطا یا تقلب نیستند.</p><p>در جزئیات تراکنش می‌توانید دسته آن را تغییر دهید یا دسته جدید بسازید. اصلاحات قابل بازگردانی هستند. برای نگهداری آن‌ها خروجی JSON فایل اصلاح‌شده را دریافت کنید؛ این خروجی شامل همه رکوردهای پذیرفته‌شده است و دوباره وارد همین ابزار می‌شود. گزارش CSV شامل بازه‌های مستقل مقایسه و کل ماه تقویم نیز هست.</p><h3>معنای اعداد گزارش</h3><p>واریز و برداشت بر اساس جهت ثبت‌شده تراکنش محاسبه می‌شوند؛ عنوان دسته تعیین‌کننده جهت نیست. «خالص گردش» برابر واریز منهای برداشت است و الزاماً سود، درآمد یا مانده واقعی حساب نیست. روزهای فاقد رکورد در نمودار صفر نمایش داده می‌شوند؛ این به معنی تأیید کامل بودن صورت‌حساب نیست.</p><h3>حریم خصوصی</h3><p>فایل‌ها فقط در حافظه همین صفحه نگهداری می‌شوند؛ با بستن یا بازخوانی صفحه پاک می‌شوند. هیچ تحلیل‌گر، سرویس خارجی یا ذخیره‌سازی خودکاری وجود ندارد. خروجی‌های CSV و چاپ شامل اطلاعات محدوده انتخاب‌شده شما و بازه‌های مستقل مقایسه و تقویم هستند.</p></div><div class="dialog-actions"><button class="button primary" type="button" data-close>متوجه شدم</button></div></dialog>
   <noscript>برای استفاده از این ابزار، جاوااسکریپت مرورگر را فعال کنید.</noscript>
   <script>/*!
  * Chart.js v4.6.1
@@ -3427,6 +3487,7 @@ dialog>p {
     const money = options.money;
     const signedMoney = options.signedMoney || (value => `${value > 0 ? '+' : ''}${money(value)}`);
     const percentage = new Intl.NumberFormat('fa-IR', { style: 'percent', maximumFractionDigits: 1 });
+    const compactAmount = new Intl.NumberFormat('fa-IR', { notation: 'compact', maximumSignificantDigits: 3 });
     const collator = new Intl.Collator('fa', { numeric: true });
     const ids = {};
     const view = { context: null, dataset: null, dateKey: '', comparison: null, parties: null,
@@ -3498,6 +3559,20 @@ dialog>p {
     }
     function dateLabel(iso) { return iso ? D.toPersianDigits(D.isoToJalali(iso)) : '—'; }
     function moneyWithUnit(amount) { return `${money(amount)} ${view.context.unitLabel}`; }
+    function calendarAmount(kind, amount) {
+      const sign = kind === 'income' ? '+' : '−';
+      const element = node('small', `calendar-amount calendar-${kind}`);
+      element.dataset.amount = String(amount);
+      // The day button's accessible label contains exact totals in the current unit.
+      element.setAttribute('aria-hidden', 'true');
+      element.append(node('bdi', 'calendar-amount-full', `${sign} ${money(amount)}`));
+      const compact = node('span', 'calendar-amount-compact');
+      const parts = compactAmount.formatToParts(amount / (view.context.unitLabel === 'ریال' ? 1 : 10));
+      compact.append(node('bdi', '', `${sign} ${parts.filter(part => part.type !== 'compact' && part.type !== 'literal').map(part => part.value).join('')}`));
+      const suffix = parts.find(part => part.type === 'compact');
+      if (suffix) compact.append(node('span', 'calendar-amount-suffix', suffix.value));
+      element.append(compact); return element;
+    }
     function ratioText(change) {
       if (change.percent === null) return change.value === 0 ? 'بدون تغییر' : 'مبنای صفر؛ درصد قابل محاسبه نیست';
       return `${change.percent > 0 ? '+' : ''}${percentage.format(change.percent)}`;
@@ -3521,7 +3596,7 @@ dialog>p {
     names.forEach(([key, label], index) => jump.append(button(`${number(index + 1)}. ${label}`, () => {
       const target = ids[`report-${key}`]; target.open = true; target.scrollIntoView({ block: 'start', behavior: 'smooth' });
     }, undefined, 'analytics-jump-button')));
-    mount.append(jump, hint('به‌جز مقایسه بازه‌ها که تاریخ مستقل دارد، این گزارش‌ها از محدوده و فیلترهای بالای صفحه پیروی می‌کنند. جست‌وجو و صفحه‌بندی داخلی فقط نمایش همان بخش را محدود می‌کند؛ خروجی گزارش شامل همه نتایج محدوده است.', 'analyticsScope'));
+    mount.append(jump, hint('گزارش‌ها از فیلترهای بالای صفحه پیروی می‌کنند. مقایسه بازه‌ها تاریخ مستقل دارد و تقویم، ماه انتخابی را کامل نشان می‌دهد؛ سایر فیلترها در هر دو اعمال می‌شوند. جست‌وجو و صفحه‌بندی داخلی فقط نمایش همان بخش را محدود می‌کند؛ خروجی گزارش شامل همه نتایج محدوده است.', 'analyticsScope'));
 
     const compareBody = section('comparison', 'مقایسه دو بازه زمانی', 'تغییر واریز، برداشت، تعداد و سهم دسته‌ها در دو بازه هم‌طول', true);
     const compareForm = identified('form', 'comparisonForm', 'analytics-comparison-form no-print'); compareForm.noValidate = true;
@@ -3577,7 +3652,11 @@ dialog>p {
     const calendarLegend = node('div', 'analytics-heat-legend'); calendarLegend.append(node('span', '', 'کمتر'));
     for (let level = 0; level <= 4; level++) { const swatch = node('i'); swatch.dataset.level = level; swatch.setAttribute('aria-hidden', 'true'); calendarLegend.append(swatch); }
     calendarLegend.append(node('span', '', 'بیشتر'));
-    calendarBody.append(calendarLegend, hint('شدت رنگ فقط بر اساس تراکنش‌های فیلترشده همین ماه است. با انتخاب یک روز، فیلتر تاریخ روی آن روز قرار می‌گیرد. روز بدون رکورد، نبود تراکنش در بانک را ثابت نمی‌کند.'));
+    const amountLegend = node('div', 'calendar-amount-legend');
+    amountLegend.append(node('span', 'calendar-income-key', '+ واریز'), node('span', 'calendar-expense-key', '− برداشت'), identified('span', 'calendarUnit'));
+    calendarBody.append(calendarLegend, amountLegend,
+      hint('تقویم مستقل از فیلتر تاریخ، کل ماه انتخابی را با رعایت سایر فیلترها نشان می‌دهد. انتخاب روز، تاریخ جدول و گزارش‌های وابسته را تغییر می‌دهد و اطلاعات روزهای دیگر تقویم حفظ می‌شود. روز بدون رکورد، نبود تراکنش در بانک را ثابت نمی‌کند.'),
+      node('p', 'analytics-hint calendar-compact-hint', 'در نمایش کوچک، مبالغ خلاصه و گرد می‌شوند؛ برای دیدن ارقام دقیق، روز را انتخاب کنید یا نشانگر را روی آن نگه دارید.'));
 
     const reviewBody = section('review', 'تراکنش‌های نیازمند بررسی', 'مبلغ نامعمول، پرداخت مشابه نزدیک و تعارض شناسه');
     reviewBody.append(hint('این نشانه‌ها خطا یا تقلب را اثبات نمی‌کنند. دلیل هر مورد و ردیف‌های مرتبط برای بررسی شما نمایش داده می‌شود.'),
@@ -3719,10 +3798,13 @@ dialog>p {
         ids.calendarPrevious.disabled = true; ids.calendarNext.disabled = true; ids['report-calendar-count'].textContent = 'بدون داده'; return;
       }
       try {
-        const metric = ids.calendarMetric.value, result = A.calendar(view.context.rows, view.month, metric); view.calendar = result;
+        // Keep the month intact when a day narrows the global date range.
+        // baselineRows still includes search, category, amount and drilldown filters.
+        const metric = ids.calendarMetric.value, result = A.calendar(view.context.baselineRows, view.month, metric); view.calendar = result;
         monthOptions(); ids.calendarTitle.textContent = result.title;
         const metricLabel = metric === 'count' ? 'تعداد تراکنش' : metric === 'income' ? 'مجموع واریز' : 'مجموع برداشت';
-        ids.calendarSummary.textContent = `${metricLabel} این ماه در محدوده فعلی: ${metric === 'count' ? number(result.total) : moneyWithUnit(result.total)}`;
+        ids.calendarSummary.textContent = `${metricLabel} کل ماه با فیلترهای فعلی: ${metric === 'count' ? number(result.total) : moneyWithUnit(result.total)}`;
+        ids.calendarUnit.textContent = `مبالغ به ${view.context.unitLabel}`;
         ids['report-calendar-count'].textContent = result.title;
         const observed = observedBounds(), firstMonth = observed.first ? D.isoToJalali(observed.first).slice(0, 7).replace('/', '-') : '';
         const lastMonth = observed.last ? D.isoToJalali(observed.last).slice(0, 7).replace('/', '-') : '';
@@ -3734,10 +3816,10 @@ dialog>p {
           cell.dataset.level = String(day.value > 0 && result.max > 0 ? Math.min(4, Math.ceil(day.value / result.max * 4)) : 0);
           const selected = view.context.filters.startDate === day.day && view.context.filters.endDate === day.day;
           cell.setAttribute('aria-pressed', String(selected));
-          const value = metric === 'count' ? number(day.value) : moneyWithUnit(day.value);
-          cell.title = `${day.dateLabel} · ${number(day.count)} تراکنش · ${metricLabel}: ${value}`;
+          cell.title = `${day.dateLabel} · ${number(day.count)} تراکنش · واریز: ${moneyWithUnit(day.income)} · برداشت: ${moneyWithUnit(day.expense)}`;
           cell.setAttribute('aria-label', `${cell.title}؛ نمایش تراکنش‌های این روز`);
-          cell.append(node('strong', '', number(day.jalaliDay)), node('small', '', day.count ? `${number(day.count)} تراکنش` : 'بدون رکورد'));
+          cell.append(node('strong', '', number(day.jalaliDay)), calendarAmount('income', day.income), calendarAmount('expense', day.expense),
+            node('small', 'calendar-count', day.count ? `${number(day.count)} تراکنش` : 'بدون رکورد'));
           if (day.day < observed.first || day.day > observed.last) cell.classList.add('outside-observation');
           cells.push(cell);
         }
@@ -3844,7 +3926,7 @@ dialog>p {
       const statuses = { categorized: 'دسته مشخص', uncategorized: 'بدون دسته', unresolved: 'نام دسته نامشخص' };
       view.quality.categories.forEach(group => rows.push(['کیفیت دسته', group.name, statuses[group.status], group.count, csvMoney(group.amount)]));
       if (view.calendar) {
-        rows.push(['تقویم شمسی', view.calendar.title, 'تعداد', 'واریز', 'برداشت']);
+        rows.push(['تقویم شمسی؛ کل ماه با سایر فیلترها', view.calendar.title, 'تعداد', 'واریز', 'برداشت']);
         view.calendar.cells.forEach(day => rows.push(['تقویم', day.dateLabel, day.count, csvMoney(day.income), csvMoney(day.expense)]));
       }
       return rows;

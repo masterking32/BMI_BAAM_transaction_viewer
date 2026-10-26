@@ -11,6 +11,7 @@
     const money = options.money;
     const signedMoney = options.signedMoney || (value => `${value > 0 ? '+' : ''}${money(value)}`);
     const percentage = new Intl.NumberFormat('fa-IR', { style: 'percent', maximumFractionDigits: 1 });
+    const compactAmount = new Intl.NumberFormat('fa-IR', { notation: 'compact', maximumSignificantDigits: 3 });
     const collator = new Intl.Collator('fa', { numeric: true });
     const ids = {};
     const view = { context: null, dataset: null, dateKey: '', comparison: null, parties: null,
@@ -82,6 +83,20 @@
     }
     function dateLabel(iso) { return iso ? D.toPersianDigits(D.isoToJalali(iso)) : '—'; }
     function moneyWithUnit(amount) { return `${money(amount)} ${view.context.unitLabel}`; }
+    function calendarAmount(kind, amount) {
+      const sign = kind === 'income' ? '+' : '−';
+      const element = node('small', `calendar-amount calendar-${kind}`);
+      element.dataset.amount = String(amount);
+      // The day button's accessible label contains exact totals in the current unit.
+      element.setAttribute('aria-hidden', 'true');
+      element.append(node('bdi', 'calendar-amount-full', `${sign} ${money(amount)}`));
+      const compact = node('span', 'calendar-amount-compact');
+      const parts = compactAmount.formatToParts(amount / (view.context.unitLabel === 'ریال' ? 1 : 10));
+      compact.append(node('bdi', '', `${sign} ${parts.filter(part => part.type !== 'compact' && part.type !== 'literal').map(part => part.value).join('')}`));
+      const suffix = parts.find(part => part.type === 'compact');
+      if (suffix) compact.append(node('span', 'calendar-amount-suffix', suffix.value));
+      element.append(compact); return element;
+    }
     function ratioText(change) {
       if (change.percent === null) return change.value === 0 ? 'بدون تغییر' : 'مبنای صفر؛ درصد قابل محاسبه نیست';
       return `${change.percent > 0 ? '+' : ''}${percentage.format(change.percent)}`;
@@ -105,7 +120,7 @@
     names.forEach(([key, label], index) => jump.append(button(`${number(index + 1)}. ${label}`, () => {
       const target = ids[`report-${key}`]; target.open = true; target.scrollIntoView({ block: 'start', behavior: 'smooth' });
     }, undefined, 'analytics-jump-button')));
-    mount.append(jump, hint('به‌جز مقایسه بازه‌ها که تاریخ مستقل دارد، این گزارش‌ها از محدوده و فیلترهای بالای صفحه پیروی می‌کنند. جست‌وجو و صفحه‌بندی داخلی فقط نمایش همان بخش را محدود می‌کند؛ خروجی گزارش شامل همه نتایج محدوده است.', 'analyticsScope'));
+    mount.append(jump, hint('گزارش‌ها از فیلترهای بالای صفحه پیروی می‌کنند. مقایسه بازه‌ها تاریخ مستقل دارد و تقویم، ماه انتخابی را کامل نشان می‌دهد؛ سایر فیلترها در هر دو اعمال می‌شوند. جست‌وجو و صفحه‌بندی داخلی فقط نمایش همان بخش را محدود می‌کند؛ خروجی گزارش شامل همه نتایج محدوده است.', 'analyticsScope'));
 
     const compareBody = section('comparison', 'مقایسه دو بازه زمانی', 'تغییر واریز، برداشت، تعداد و سهم دسته‌ها در دو بازه هم‌طول', true);
     const compareForm = identified('form', 'comparisonForm', 'analytics-comparison-form no-print'); compareForm.noValidate = true;
@@ -161,7 +176,11 @@
     const calendarLegend = node('div', 'analytics-heat-legend'); calendarLegend.append(node('span', '', 'کمتر'));
     for (let level = 0; level <= 4; level++) { const swatch = node('i'); swatch.dataset.level = level; swatch.setAttribute('aria-hidden', 'true'); calendarLegend.append(swatch); }
     calendarLegend.append(node('span', '', 'بیشتر'));
-    calendarBody.append(calendarLegend, hint('شدت رنگ فقط بر اساس تراکنش‌های فیلترشده همین ماه است. با انتخاب یک روز، فیلتر تاریخ روی آن روز قرار می‌گیرد. روز بدون رکورد، نبود تراکنش در بانک را ثابت نمی‌کند.'));
+    const amountLegend = node('div', 'calendar-amount-legend');
+    amountLegend.append(node('span', 'calendar-income-key', '+ واریز'), node('span', 'calendar-expense-key', '− برداشت'), identified('span', 'calendarUnit'));
+    calendarBody.append(calendarLegend, amountLegend,
+      hint('تقویم مستقل از فیلتر تاریخ، کل ماه انتخابی را با رعایت سایر فیلترها نشان می‌دهد. انتخاب روز، تاریخ جدول و گزارش‌های وابسته را تغییر می‌دهد و اطلاعات روزهای دیگر تقویم حفظ می‌شود. روز بدون رکورد، نبود تراکنش در بانک را ثابت نمی‌کند.'),
+      node('p', 'analytics-hint calendar-compact-hint', 'در نمایش کوچک، مبالغ خلاصه و گرد می‌شوند؛ برای دیدن ارقام دقیق، روز را انتخاب کنید یا نشانگر را روی آن نگه دارید.'));
 
     const reviewBody = section('review', 'تراکنش‌های نیازمند بررسی', 'مبلغ نامعمول، پرداخت مشابه نزدیک و تعارض شناسه');
     reviewBody.append(hint('این نشانه‌ها خطا یا تقلب را اثبات نمی‌کنند. دلیل هر مورد و ردیف‌های مرتبط برای بررسی شما نمایش داده می‌شود.'),
@@ -303,10 +322,13 @@
         ids.calendarPrevious.disabled = true; ids.calendarNext.disabled = true; ids['report-calendar-count'].textContent = 'بدون داده'; return;
       }
       try {
-        const metric = ids.calendarMetric.value, result = A.calendar(view.context.rows, view.month, metric); view.calendar = result;
+        // Keep the month intact when a day narrows the global date range.
+        // baselineRows still includes search, category, amount and drilldown filters.
+        const metric = ids.calendarMetric.value, result = A.calendar(view.context.baselineRows, view.month, metric); view.calendar = result;
         monthOptions(); ids.calendarTitle.textContent = result.title;
         const metricLabel = metric === 'count' ? 'تعداد تراکنش' : metric === 'income' ? 'مجموع واریز' : 'مجموع برداشت';
-        ids.calendarSummary.textContent = `${metricLabel} این ماه در محدوده فعلی: ${metric === 'count' ? number(result.total) : moneyWithUnit(result.total)}`;
+        ids.calendarSummary.textContent = `${metricLabel} کل ماه با فیلترهای فعلی: ${metric === 'count' ? number(result.total) : moneyWithUnit(result.total)}`;
+        ids.calendarUnit.textContent = `مبالغ به ${view.context.unitLabel}`;
         ids['report-calendar-count'].textContent = result.title;
         const observed = observedBounds(), firstMonth = observed.first ? D.isoToJalali(observed.first).slice(0, 7).replace('/', '-') : '';
         const lastMonth = observed.last ? D.isoToJalali(observed.last).slice(0, 7).replace('/', '-') : '';
@@ -318,10 +340,10 @@
           cell.dataset.level = String(day.value > 0 && result.max > 0 ? Math.min(4, Math.ceil(day.value / result.max * 4)) : 0);
           const selected = view.context.filters.startDate === day.day && view.context.filters.endDate === day.day;
           cell.setAttribute('aria-pressed', String(selected));
-          const value = metric === 'count' ? number(day.value) : moneyWithUnit(day.value);
-          cell.title = `${day.dateLabel} · ${number(day.count)} تراکنش · ${metricLabel}: ${value}`;
+          cell.title = `${day.dateLabel} · ${number(day.count)} تراکنش · واریز: ${moneyWithUnit(day.income)} · برداشت: ${moneyWithUnit(day.expense)}`;
           cell.setAttribute('aria-label', `${cell.title}؛ نمایش تراکنش‌های این روز`);
-          cell.append(node('strong', '', number(day.jalaliDay)), node('small', '', day.count ? `${number(day.count)} تراکنش` : 'بدون رکورد'));
+          cell.append(node('strong', '', number(day.jalaliDay)), calendarAmount('income', day.income), calendarAmount('expense', day.expense),
+            node('small', 'calendar-count', day.count ? `${number(day.count)} تراکنش` : 'بدون رکورد'));
           if (day.day < observed.first || day.day > observed.last) cell.classList.add('outside-observation');
           cells.push(cell);
         }
@@ -428,7 +450,7 @@
       const statuses = { categorized: 'دسته مشخص', uncategorized: 'بدون دسته', unresolved: 'نام دسته نامشخص' };
       view.quality.categories.forEach(group => rows.push(['کیفیت دسته', group.name, statuses[group.status], group.count, csvMoney(group.amount)]));
       if (view.calendar) {
-        rows.push(['تقویم شمسی', view.calendar.title, 'تعداد', 'واریز', 'برداشت']);
+        rows.push(['تقویم شمسی؛ کل ماه با سایر فیلترها', view.calendar.title, 'تعداد', 'واریز', 'برداشت']);
         view.calendar.cells.forEach(day => rows.push(['تقویم', day.dateLabel, day.count, csvMoney(day.income), csvMoney(day.expense)]));
       }
       return rows;

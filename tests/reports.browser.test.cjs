@@ -127,6 +127,38 @@ test('advanced reports: comparisons, drilldown, category corrections and respons
     for (const row of expected) assert.ok(csv.includes(row.transactionTraceNumber));
     for (const row of transactions.filter(row => !expected.includes(row))) assert.ok(!csv.includes(`"${row.transactionTraceNumber}"`));
   }
+  const calendarMonth = day => jalali(day).slice(0, 7).replace('/', '-');
+  const calendarCell = day => page.locator(`#calendarGrid button[data-day="${day}"]`);
+  async function calendarState() {
+    return page.locator('#calendarGrid button[data-day]').evaluateAll(cells => cells.map(cell => ({
+      day: cell.dataset.day, level: cell.dataset.level,
+      count: cell.querySelector('.calendar-count').textContent,
+      income: Number(cell.querySelector('.calendar-income').dataset.amount),
+      expense: Number(cell.querySelector('.calendar-expense').dataset.amount),
+    })));
+  }
+  async function expectCalendarRows(expected) {
+    const days = await calendarState();
+    for (const day of days) {
+      const rows = expected.filter(row => row.transactionDateTime.slice(0, 10) === day.day);
+      assert.equal(numeric(day.count), rows.length, `${day.day}: transaction count`);
+      assert.equal(day.income, total(rows, 'CREDIT'), `${day.day}: exact daily deposits`);
+      assert.equal(day.expense, total(rows, 'DEBIT'), `${day.day}: exact daily withdrawals`);
+      assert.equal(Number(day.level) > 0, rows.length > 0, `${day.day}: count heat intensity`);
+    }
+    return days;
+  }
+  async function expectSelectedRows(expected, universe = transactions) {
+    await expectTotals(expected);
+    assert.equal(await page.locator('#transactionsBody .row-detail').count(), expected.length);
+    const tableDates = await page.locator('#transactionsBody tr:has(.row-detail)').evaluateAll(rows => rows.map(row =>
+      row.firstElementChild.firstChild.textContent.replace(/[۰-۹]/g, digit => '۰۱۲۳۴۵۶۷۸۹'.indexOf(digit))));
+    assert.deepEqual(tableDates.sort(), expected.map(row => jalali(row.transactionDateTime.slice(0, 10))).sort(), 'table must show only selected dates');
+    const csv = await download('#exportCsv');
+    for (const row of universe) {
+      assert.equal(csv.includes(`"${row.transactionTraceNumber}"`), expected.includes(row), `${row.transactionId}: CSV selection`);
+    }
+  }
 
   await t.test('six Persian reports load with exact original totals', async () => {
     await page.locator('#advancedReports').waitFor({ state: 'visible' });
@@ -184,29 +216,114 @@ test('advanced reports: comparisons, drilldown, category corrections and respons
     await reset();
   });
 
-  await t.test('Jalali calendar filters the selected Tehran day and preserves exact cash flow', async () => {
+  await t.test('calendar day selections retain every other day and filter the table and CSV', async () => {
     await openReport('calendar');
-    await page.locator('#calendarMonth').selectOption(jalali('2026-09-17').slice(0, 7).replace('/', '-'));
+    await page.locator('#calendarMonth').selectOption(calendarMonth('2026-09-17'));
     await page.locator('#calendarMetric').selectOption('count');
-    const cell = page.locator('#calendarGrid button[data-day="2026-09-17"]');
-    await cell.click();
-    await expectTotals(subset(['double-one', 'double-two', 'same-day-other-party']));
+    const before = await expectCalendarRows(transactions);
+    await calendarCell('2026-09-17').click();
+    await expectSelectedRows(subset(['double-one', 'double-two', 'same-day-other-party']));
     assert.equal(await page.locator('#startDate').inputValue(), await page.locator('#endDate').inputValue());
+    assert.equal(await calendarCell('2026-09-17').getAttribute('aria-pressed'), 'true');
+    assert.deepEqual(await calendarState(), before, 'selecting a day must not clear other days or rescale their heat levels');
+    await calendarCell('2026-09-18').click();
+    await expectSelectedRows(subset(['identity-conflict']));
+    assert.equal(await calendarCell('2026-09-17').getAttribute('aria-pressed'), 'false');
+    assert.equal(await calendarCell('2026-09-18').getAttribute('aria-pressed'), 'true');
+    assert.deepEqual(await calendarState(), before, 'a subsequent selection must preserve the complete calendar');
+    await page.locator('#calendarMonth').selectOption(calendarMonth('2026-10-05'));
+    await expectCalendarRows(transactions);
+    await expectTotals(subset(['identity-conflict']));
+    await calendarCell('2026-10-05').click();
+    await expectSelectedRows(subset(['rent-3']));
     await reset();
   });
 
-  await t.test('calendar drilldown retains the selected counterparty subset', async () => {
-    await openReport('counterparties');
-    await page.locator('#partySearch').fill('SYNTHETICDOUBLE');
-    await page.locator('#counterpartyBody button[data-party-key]').first().click();
-    await expectTotals(subset(['double-one', 'double-two']));
+  await t.test('calendar keeps non-date filters when dates change and when the selection has no rows', async () => {
+    await page.locator('#categoryId').selectOption('101');
+    await page.locator('#direction').selectOption('DEBIT');
+    await page.locator('#method').selectOption('خرید فروشگاهی');
+    await page.locator('#minAmount').fill('100000');
+    await page.locator('#search').fill('تراکنش ساختگی');
+    await page.locator('#applyFilters').click();
+    const filtered = transactions.filter(row => row.categoryId === 101 && row.creditDebit === 'DEBIT'
+      && row.supplementaryInfo.supplementaryTypeName === 'خرید فروشگاهی' && row.amount >= 100000);
+    await expectTotals(filtered);
     await openReport('calendar');
-    await page.locator('#calendarMonth').selectOption(jalali('2026-09-17').slice(0, 7).replace('/', '-'));
-    await page.locator('#calendarGrid button[data-day="2026-09-17"]').click();
-    await expectTotals(subset(['double-one', 'double-two']));
+    await page.locator('#calendarMonth').selectOption(calendarMonth('2026-09-17'));
+    const before = await expectCalendarRows(filtered);
+    await calendarCell('2026-09-11').click();
+    await expectSelectedRows(subset(['food-1']));
+    assert.deepEqual(await calendarState(), before);
+    await calendarCell('2026-09-17').click();
+    await expectSelectedRows([]);
+    assert.deepEqual(await calendarState(), before, 'an empty selected day must not erase the rest of the month');
+    await calendarCell('2026-09-16').click();
+    await expectSelectedRows(subset(['food-outlier']));
+    assert.deepEqual(await calendarState(), before);
+    await reset();
+  });
+
+  await t.test('calendar retains a counterparty subset across days and excludes other accounts', async () => {
+    await openReport('counterparties');
+    await page.locator('#partySearch').fill('SYNTHETICRENT001');
+    await page.locator('#counterpartyBody button[data-party-key="account:SYNTHETICRENT001"]').click();
+    const partyRows = subset(['rent-0', 'rent-1', 'rent-2', 'rent-3']);
+    await expectTotals(partyRows);
+    await openReport('calendar');
+    await page.locator('#calendarMonth').selectOption(calendarMonth('2026-09-05'));
+    const before = await expectCalendarRows(partyRows);
+    await calendarCell('2026-09-05').click();
+    await expectSelectedRows(subset(['rent-2']));
+    assert.deepEqual(await calendarState(), before);
+    await calendarCell('2026-09-06').click();
+    await expectSelectedRows([]);
+    assert.deepEqual(await calendarState(), before, 'same-name counterparty must stay excluded even on an empty day');
     assert.equal(await page.locator('#drilldownBar').isVisible(), true);
+    await page.locator('#calendarMonth').selectOption(calendarMonth('2026-10-05'));
+    await expectCalendarRows(partyRows);
+    await calendarCell('2026-10-05').click();
+    await expectSelectedRows(subset(['rent-3']));
     await reset();
     await page.locator('#partySearch').fill('');
+  });
+
+  await t.test('daily money responds to display units and retains exact accessible amounts on small dark screens', async () => {
+    const calendarTransactions = [...transactions,
+      { ...transactions[0], transactionId: 'calendar-large-credit', transactionDateTime: '2026-09-17T11:00:00Z',
+        amount: 1234567890123, creditDebit: 'CREDIT', categoryId: 202, transactionTraceNumber: 'SYNTHETIC-CALENDAR-CREDIT' },
+      { ...transactions[0], transactionId: 'calendar-large-debit', transactionDateTime: '2026-09-18T11:00:00Z',
+        amount: 987654321098, transactionTraceNumber: 'SYNTHETIC-CALENDAR-DEBIT' },
+    ];
+    await page.locator('#quickFiles').setInputFiles(jsonFile('calendar-synthetic-large-amounts.json', calendarTransactions));
+    await imported('calendar-synthetic-large-amounts.json');
+    await expectTotals(calendarTransactions);
+    const section = await openReport('calendar');
+    await page.locator('#calendarMonth').selectOption(calendarMonth('2026-09-17'));
+    await page.locator('#calendarMetric').selectOption('count');
+    const before = await expectCalendarRows(calendarTransactions);
+    await calendarCell('2026-09-17').click();
+    await expectSelectedRows(calendarTransactions.filter(row => row.transactionDateTime.startsWith('2026-09-17')), calendarTransactions);
+    assert.deepEqual(await calendarState(), before);
+    const creditText = await calendarCell('2026-09-17').locator('.calendar-income').textContent();
+    const exactText = text => text.replace(/[۰-۹]/g, digit => '۰۱۲۳۴۵۶۷۸۹'.indexOf(digit)).replace(/[٬,\s]/g, '').replace(/٫/g, '.');
+    for (const attribute of ['title', 'aria-label']) {
+      assert.ok(exactText(await calendarCell('2026-09-17').getAttribute(attribute)).includes('1234567890123'), `full rial amount in ${attribute}`);
+    }
+    await section.screenshot({ path: path.join(output, 'calendar-light-desktop.png'), style: '.skip-link { visibility: hidden !important; }' });
+    await page.locator('#unitSelect').selectOption('toman');
+    assert.deepEqual(await calendarState(), before, 'display units must not mutate raw daily rial totals');
+    assert.notEqual(await calendarCell('2026-09-17').locator('.calendar-income').textContent(), creditText);
+    for (const attribute of ['title', 'aria-label']) {
+      assert.ok(exactText(await calendarCell('2026-09-17').getAttribute(attribute)).includes('123456789012.3'), `full toman amount in ${attribute}`);
+    }
+    await page.locator('#themeToggle').click();
+    await page.setViewportSize({ width: 320, height: 844 });
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'calendar must not widen a 320px viewport');
+    await section.screenshot({ path: path.join(output, 'calendar-dark-mobile-320.png'), style: '.skip-link { visibility: hidden !important; }' });
+    await page.setViewportSize({ width: 1440, height: 1000 });
+    await page.locator('#themeToggle').click();
+    await importFixture();
   });
 
   await t.test('large, repeated and conflicting records carry separate review drilldowns', async () => {
