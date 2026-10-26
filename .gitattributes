@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.woff2 binary
+# These bytes are verified against vendor/manifest.json during every build.
+vendor/chart.js/chart.umd.min.js -text

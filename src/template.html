@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; font-src data:; img-src data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>بام‌نما | گزارش و تحلیل تراکنش‌های بام</title>
+  <style>@font-face{font-family:Vazirmatn;src:url(data:font/woff2;base64,{{FONT_DATA}}) format('woff2');font-weight:100 900;font-display:swap}{{STYLES}}</style>
+</head>
+<body>
+  <a class="skip-link" href="#main">رفتن به محتوای اصلی</a>
+  <aside class="sidebar no-print">
+    <a class="brand" href="#"><span class="brand-mark">ب</span><span>بام‌نما<small>روایت روشن تراکنش‌ها</small></span></a>
+    <div class="nav-caption">فضای تحلیل حساب</div>
+    <nav aria-label="ناوبری اصلی">
+      <a href="#overview" class="nav-link active"><span aria-hidden="true">◫</span> نمای کلی</a>
+      <a href="#transactions" class="nav-link"><span aria-hidden="true">⇄</span> تراکنش‌ها</a>
+      <a href="#reports" class="nav-link"><span aria-hidden="true">▥</span> گزارش تحلیلی</a>
+      <button class="nav-link" type="button" data-open="helpDialog"><span aria-hidden="true">؟</span> راهنمای استفاده</button>
+    </nav>
+    <div class="sidebar-bottom"><div class="local-badge"><i></i> پردازش کاملاً روی دستگاه</div><p>اطلاعات بانکی شما فقط در حافظه همین مرورگر پردازش می‌شود.</p><span class="version">نسخه ۲ · مستقل و آفلاین</span></div>
+  </aside>
+  <div class="workspace">
+    <header class="topbar no-print"><div class="breadcrumb">ابزارهای مالی <span>/</span> <strong>تحلیل گردش حساب</strong></div><div class="top-actions"><label class="unit-control" for="unitSelect">واحد نمایش <select id="unitSelect"><option value="toman">تومان</option><option value="rial">ریال</option></select></label><button class="button primary compact" type="button" data-open="importDialog"><span aria-hidden="true">＋</span> ورود فایل</button></div></header>
+    <main id="main">
+      <div id="notice" class="notice" role="alert" hidden></div>
+      <section id="welcome" class="welcome">
+        <div class="welcome-copy"><span class="eyebrow">از تراکنش تا بینش</span><h1>گردش حسابتان را<br><em>شفاف‌تر</em> ببینید.</h1><p>فایل تراکنش‌های بام را وارد کنید؛ جریان واریز و برداشت، سهم دسته‌ها و جزئیات هر تراکنش، در یک نمای منظم و قابل جست‌وجو.</p><div class="welcome-tags"><span>تقویم شمسی</span><span>فیلترهای دقیق</span><span>گزارش قابل چاپ</span></div></div>
+        <div class="upload-card" id="dropZone"><div class="upload-icon" aria-hidden="true">↥</div><h2>از اینجا شروع کنید</h2><p>فایل JSON تراکنش‌ها و در صورت نیاز<br>فایل دسته‌بندی را اینجا رها کنید.</p><label class="button primary file-label" for="quickFiles">انتخاب فایل‌های بام <span aria-hidden="true">←</span></label><input id="quickFiles" class="file-input" type="file" accept=".json,application/json" multiple><small>فایل دسته‌بندی اختیاری است · حداکثر هر فایل ۲۵ مگابایت</small><div class="upload-divider"></div><button class="text-button" type="button" data-open="helpDialog">چطور فایل‌های بام را دریافت کنم؟</button></div>
+        <div class="welcome-footer"><span>◈</span><div><strong>یک فایل، همه‌جا همراه شما</strong><p>بدون نصب، بدون ارسال اطلاعات و بدون نیاز به اینترنت.</p></div></div>
+      </section>
+      <div id="dashboard" hidden>
+        <section id="overview" class="section-head"><div><div class="eyebrow">گزارش گردش حساب</div><h1>نمای کلی تراکنش‌ها</h1><p id="datasetInfo"></p></div><div class="report-actions no-print"><button id="exportCsv" class="button" type="button">↓ خروجی CSV</button><button id="printReport" class="button" type="button">▤ چاپ گزارش</button></div></section>
+        <div id="importInfo" class="import-info no-print"></div>
+        <section class="filter-panel no-print" aria-labelledby="filterHeading"><div class="filter-heading"><h2 id="filterHeading">محدوده گزارش</h2><span id="filterStatus">همه تراکنش‌ها</span><button id="resetFilters" class="text-button" type="button">پاک کردن فیلترها</button></div><form id="filterForm" novalidate>
+          <div class="filter-grid">
+            <label class="search-field">جست‌وجو<input id="search" type="search" placeholder="شرح، پیگیری، طرف حساب یا یادداشت…" autocomplete="off"></label>
+            <label>نوع تراکنش<select id="direction"><option value="">همه تراکنش‌ها</option value="CREDIT">واریز</option><option value="DEBIT">برداشت</option></select></label>
+            <label>دسته‌بندی<select id="categoryId"><option value="">همه دسته‌ها</option></select></label>
+            <label>روش تراکنش<select id="method"><option value="">همه روش‌ها</option></select></label>
+          </div>
+          <div class="filter-grid lower">
+            <label>از تاریخ شمسی<input id="startDate" inputmode="numeric" placeholder="۱۴۰۵/۰۱/۰۱" dir="ltr" aria-describedby="dateHint"></label>
+            <label>تا تاریخ شمسی<input id="endDate" inputmode="numeric" placeholder="۱۴۰۵/۱۲/۲۹" dir="ltr" aria-describedby="dateHint"></label>
+            <label>حداقل مبلغ <span class="unit-label">تومان</span><input id="minAmount" inputmode="decimal" placeholder="بدون حداقل" dir="ltr"></label>
+            <label>حداکثر مبلغ <span class="unit-label">تومان</span><input id="maxAmount" inputmode="decimal" placeholder="بدون حداکثر" dir="ltr"></label>
+            <button id="applyFilters" class="button dark" type="submit">اعمال فیلتر <span aria-hidden="true">←</span></button>
+          </div><p class="field-hint" id="dateHint">تاریخ با قالب سال/ماه/روز؛ ابتدا و انتهای بازه شامل گزارش می‌شوند. همه گزارش‌ها از این فیلترها پیروی می‌کنند.</p><p id="filterError" class="field-error" role="alert" hidden></p>
+        </form></section>
+        <p id="reportScope" class="report-scope"></p>
+        <div class="kpi-grid">
+          <article class="kpi income"><div class="kpi-heading">مجموع واریز <span aria-hidden="true">↙</span></div><div class="kpi-number" id="incomeValue">۰</div><div class="kpi-foot"><span class="unit-label">تومان</span><span id="incomeCount"></span></div></article>
+          <article class="kpi expense"><div class="kpi-heading">مجموع برداشت <span aria-hidden="true">↗</span></div><div class="kpi-number" id="expenseValue">۰</div><div class="kpi-foot"><span class="unit-label">تومان</span><span id="expenseCount"></span></div></article>
+          <article class="kpi"><div class="kpi-heading">خالص گردش <span aria-hidden="true">⇄</span></div><div class="kpi-number" id="netValue">۰</div><div class="kpi-foot"><span class="unit-label">تومان</span><span>واریز منهای برداشت</span></div></article>
+          <article class="kpi"><div class="kpi-heading">تعداد تراکنش‌ها <span aria-hidden="true">▤</span></div><div class="kpi-number" id="countValue">۰</div><div class="kpi-foot"><span>تراکنش در محدوده گزارش</span><span id="activeDays"></span></div></article>
+        </div>
+        <div id="emptyResults" class="empty-state" hidden><strong>تراکنشی با این فیلترها پیدا نشد.</strong><p>بازه تاریخ، مبلغ یا عبارت جست‌وجو را تغییر دهید.</p></div>
+        <div class="chart-grid" id="chartsSection">
+          <section class="panel flow-panel"><div class="panel-heading"><div><h2>جریان واریز و برداشت</h2><p>مقایسه مبالغ در طول زمان</p></div><label class="chart-control no-print" for="groupBy"><span class="sr-only">گروه‌بندی نمودار</span><select id="groupBy"><option value="daily">روزانه</option><option value="monthly">ماهانه (شمسی)</option></select></label></div><div class="chart-wrap"><canvas id="flowChart" role="img" aria-label="نمودار واریز و برداشت؛ داده‌های معادل در جدول گزارش زمانی"></canvas></div><p class="chart-note" id="flowNote"></p></section>
+          <section class="panel category-panel"><div class="panel-heading"><div><h2>سهم دسته‌ها</h2><p>ترکیب مبلغ تراکنش‌ها</p></div><select id="categoryMetric" aria-label="جهت نمودار دسته‌ها" class="no-print"><option value="expense">برداشت</option><option value="income">واریز</option></select></div><div class="donut-wrap"><canvas id="categoryChart" role="img" aria-label="سهم دسته‌ها؛ مقادیر در فهرست زیر نمودار"></canvas><div class="donut-center"><strong id="categoryTotal"></strong><span class="unit-label">تومان</span></div></div><div id="categoryLegend" class="category-legend"></div></section>
+          <section class="panel"><div class="panel-heading"><div><h2>روند خالص گردش</h2><p>جمع تجمعی واریز منهای برداشت انتخاب‌شده</p></div><span class="small-badge">از صفر</span></div><div class="chart-wrap short"><canvas id="netChart" role="img" aria-label="خالص تجمعی تراکنش‌های فیلترشده"></canvas></div><p class="chart-note">این نمودار مانده حساب نیست؛ نقطه شروع محاسبه صفر است.</p></section>
+          <section class="panel"><div class="panel-heading"><div><h2>روش‌های تراکنش</h2><p>مقایسه واریز و برداشت بر اساس روش</p></div></div><div class="chart-wrap short"><canvas id="methodChart" role="img" aria-label="مبالغ بر اساس روش؛ داده‌های کامل در گزارش روش‌ها"></canvas></div><p class="chart-note" id="methodNote"></p></section>
+        </div>
+        <section id="reports" class="reports-section"><div class="section-title"><h2>نگاهی دقیق‌تر به گزارش</h2><span>بر اساس تراکنش‌های انتخاب‌شده</span></div><div class="insight-grid" id="insights"></div><div class="panel report-table-panel"><div class="panel-heading"><div><h2>گزارش زمانی</h2><p id="periodReportNote">جمع مبالغ بر اساس ماه شمسی</p></div><button id="exportSummary" class="text-button no-print" type="button">↓ خروجی گزارش</button></div><div class="table-scroll"><table class="report-table"><caption class="sr-only">خلاصه مبالغ بر اساس بازه زمانی نمودار</caption><thead><tr><th scope="col">بازه زمانی</th><th scope="col">تعداد</th><th scope="col">واریز</th><th scope="col">برداشت</th><th scope="col">خالص گردش</th></tr></thead><tbody id="periodBody"></tbody></table></div></div>
+          <details class="panel supplementary-report"><summary>گزارش کامل دسته‌بندی و روش‌های تراکنش</summary><div class="table-scroll"><table class="report-table"><caption>گزارش دسته‌بندی‌ها</caption><thead><tr><th scope="col">دسته‌بندی</th><th scope="col">تعداد</th><th scope="col">واریز</th><th scope="col">برداشت</th><th scope="col">خالص</th></tr></thead><tbody id="categoryReportBody"></tbody></table></div><div class="table-scroll"><table class="report-table"><caption>گزارش روش‌ها</caption><thead><tr><th scope="col">روش</th><th scope="col">تعداد</th><th scope="col">واریز</th><th scope="col">برداشت</th><th scope="col">خالص</th></tr></thead><tbody id="methodReportBody"></tbody></table></div></details>
+        </section>
+        <section id="transactions" class="panel transactions-panel"><div class="panel-heading"><div><h2>ریز تراکنش‌ها <span id="tableCount" class="count-badge"></span></h2><p>برای مشاهده اطلاعات بیشتر، جزئیات هر ردیف را باز کنید.</p></div><label class="page-size no-print" for="pageSize">در هر صفحه <select id="pageSize"><option value="10">۱۰</option><option value="25" selected>۲۵</option><option value="50">۵۰</option><option value="100">۱۰۰</option></select></label></div><div class="table-scroll" tabindex="0" role="region" aria-label="جدول تراکنش‌ها؛ در صفحه کوچک به طرفین پیمایش کنید"><table id="transactionsTable"><caption class="sr-only">تراکنش‌های محدوده گزارش؛ مرتب‌سازی از دکمه عنوان ستون‌ها</caption><thead><tr><th scope="col" aria-sort="descending"><button type="button" data-sort="timestamp">تاریخ و ساعت <span>↓</span></button></th><th scope="col"><button type="button" data-sort="description">شرح تراکنش <span>↕</span></button></th><th scope="col"><button type="button" data-sort="category">دسته‌بندی <span>↕</span></button></th><th scope="col"><button type="button" data-sort="direction">نوع <span>↕</span></button></th><th scope="col"><button type="button" data-sort="amount">مبلغ <span>↕</span></button></th><th scope="col"><button type="button" data-sort="balance">مانده ثبت‌شده <span>↕</span></button></th><th scope="col">جزئیات</th></tr></thead><tbody id="transactionsBody"></tbody></table></div><div class="table-footer"><span id="pageInfo" role="status" aria-live="polite"></span><div class="pagination no-print"><button id="previousPage" class="button compact" type="button">→ قبلی</button><span id="pageNumber"></span><button id="nextPage" class="button compact" type="button">بعدی ←</button></div></div></section>
+        <div class="data-note" id="balanceNote"></div>
+      </div>
+      <footer class="footer"><span>بام‌نما · ابزار مستقل تحلیل تراکنش؛ بدون وابستگی به بانک ملی ایران</span><a href="https://github.com/masterking32/BMI_BAAM_transaction_viewer" target="_blank" rel="noopener noreferrer">کد منبع ↗</a></footer>
+    </main>
+  </div>
+  <dialog id="importDialog" aria-labelledby="importTitle"><div class="dialog-heading"><div><span class="eyebrow">ورود اطلاعات</span><h2 id="importTitle">فایل‌های بام را انتخاب کنید</h2></div><button class="icon-button" type="button" data-close aria-label="بستن">×</button></div><p>فایل جدید تراکنش‌ها جایگزین فایل قبلی می‌شود. دسته‌بندی را می‌توانید قبل یا بعد از تراکنش‌ها وارد کنید.</p><label class="file-box" for="transactionsFile"><strong>فایل تراکنش‌ها <span>ضروری</span></strong><span>transactions.json</span><input id="transactionsFile" type="file" accept=".json,application/json"></label><label class="file-box" for="categoriesFile"><strong>فایل دسته‌بندی <span>اختیاری</span></strong><span>transaction-category.json</span><input id="categoriesFile" type="file" accept=".json,application/json"></label><p id="fileStatus" class="field-hint" role="status"></p><div class="dialog-actions"><button class="button primary" type="button" data-close>نمایش گزارش</button><button id="clearData" class="text-button danger" type="button">پاک کردن اطلاعات از حافظه</button></div></dialog>
+  <dialog id="detailDialog" aria-labelledby="detailTitle"><div class="dialog-heading"><h2 id="detailTitle">جزئیات تراکنش</h2><button class="icon-button" type="button" data-close aria-label="بستن">×</button></div><dl id="detailContent" class="detail-grid"></dl><div class="dialog-actions"><button class="button" type="button" data-close>بستن جزئیات</button></div></dialog>
+  <dialog id="helpDialog" aria-labelledby="helpTitle"><div class="dialog-heading"><h2 id="helpTitle">راهنمای بام‌نما</h2><button class="icon-button" type="button" data-close aria-label="بستن">×</button></div><div class="help-content"><h3>۱. فایل‌ها را دریافت کنید</h3><p>در مرورگر خود وارد بام شوید. این ابزار فقط فایل JSON خروجی تراکنش‌ها و فایل اختیاری دسته‌بندی را می‌خواند؛ به حساب شما متصل نمی‌شود.</p><p>مسیر دسته‌بندی در نسخه‌ای از بام که این ابزار برای آن ساخته شده:</p><code dir="ltr">https://baam.bmi.ir/api/v1/pfm/transaction-category</code><p>برای دریافت تراکنش‌ها از مسیر زیر، شماره حساب و تاریخ شروع میلادی را جایگزین کنید. پاسخ را با پسوند <bdi>.json</bdi> ذخیره کنید.</p><code dir="ltr">https://baam.bmi.ir/api/account-statement/v1/transactions?accountNumber=ACCOUNT_NUMBER&amp;sort=false&amp;pageNumber=1&amp;pageSize=99999&amp;date_gt=2026-01-01T00%3A00%3A00.000Z&amp;sortType=DESC</code><p class="field-hint">این مسیرها وابسته به نسخه و دسترسی بام هستند و ممکن است تغییر کنند. کامل بودن پاسخ و محدودیت تعداد رکورد را در بام بررسی کنید.</p><h3>۲. گزارش را بسازید</h3><p>فایل‌ها را در صفحه شروع انتخاب کنید یا از «ورود فایل» استفاده کنید. دسته‌بندی اختیاری است. واحد اصلی داده‌ها ریال است؛ نمایش تومان بدون گرد کردن اجباری انجام می‌شود.</p><h3>۳. محدوده را مشخص کنید</h3><p>جست‌وجو و فیلتر تاریخ شمسی، مبلغ، دسته و روش روی همه بخش‌های گزارش اعمال می‌شوند. تاریخ و ساعت بر اساس تهران است. خروجی CSV شامل همه ردیف‌های فیلترشده با ترتیب جدول است.</p><h3>معنای اعداد گزارش</h3><p>واریز و برداشت بر اساس جهت ثبت‌شده تراکنش محاسبه می‌شوند؛ عنوان دسته تعیین‌کننده جهت نیست. «خالص گردش» برابر واریز منهای برداشت است و الزاماً سود، درآمد یا مانده واقعی حساب نیست. روزهای فاقد رکورد در نمودار صفر نمایش داده می‌شوند؛ این به معنی تأیید کامل بودن صورت‌حساب نیست.</p><h3>حریم خصوصی</h3><p>فایل‌ها فقط در حافظه همین صفحه نگهداری می‌شوند؛ با بستن یا بازخوانی صفحه پاک می‌شوند. هیچ تحلیل‌گر، سرویس خارجی یا ذخیره‌سازی خودکاری وجود ندارد. خروجی‌های CSV و چاپ شامل اطلاعات محدوده انتخاب‌شده شما هستند.</p></div><div class="dialog-actions"><button class="button primary" type="button" data-close>متوجه شدم</button></div></dialog>
+  <noscript>برای استفاده از این ابزار، جاوااسکریپت مرورگر را فعال کنید.</noscript>
+  <script>{{CHART_JS}}</script>
+  <script>{{DATA_JS}}</script>
+  <script>{{APP_JS}}</script>
+</body>
+</html>
